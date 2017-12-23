@@ -6,5 +6,5 @@ solidpy_model(
     py_deps = [
         "//tools:util_py",
     ],
-    scad_resolution = 200,
+    scad_resolution = 4,
 )
