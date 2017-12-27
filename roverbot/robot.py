@@ -4,8 +4,8 @@ from solid.utils import *
 from tools.util import *
 
 use("external/scad_utils/morphology.scad")
-use("/usr/share/openscad/libraries/MCAD/2Dshapes.scad")
-use("/usr/share/openscad/libraries/MCAD/boxes.scad")
+use("external/mcad/2Dshapes.scad")
+use("external/mcad/boxes.scad")
 
 
 translucent = [1,1,1,0.4]

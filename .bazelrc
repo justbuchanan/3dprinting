@@ -1,0 +1,2 @@
+build --host_force_python=py3
+#build --python_path=/usr/bin/python3

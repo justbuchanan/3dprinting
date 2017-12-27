@@ -1,4 +1,8 @@
-filegroup(
+package(default_visibility = ["//visibility:public"])
+
+load("@py_deps//:requirements.bzl", "requirement")
+
+py_library(
     name = "util_py",
     srcs = [
         "util.py",
@@ -6,10 +10,17 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-sh_binary(
+py_binary(
     name = "render",
     srcs = ["render.py"],
+    default_python_version = "PY3",
+    srcs_version = "PY3ONLY",
     visibility = ["//visibility:public"],
+    deps = [
+        ":util_py",
+        requirement("solidpython"),
+        requirement("numpy"),
+    ],
 )
 
 sh_binary(
