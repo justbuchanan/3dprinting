@@ -1,6 +1,5 @@
-
 filegroup(
-  name = "scad_utils",
-  srcs = glob(["*.scad"]),
-  visibility = ["//visibility:public"],
+    name = "scad_utils",
+    srcs = glob(["*.scad"]),
+    visibility = ["//visibility:public"],
 )

@@ -9,5 +9,5 @@ solidpy_model(
     scad_resolution = 100,
     deps = [
         "@scad_utils//:scad_utils",
-    ]
+    ],
 )
