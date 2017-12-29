@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: justbuchanan/docker-archlinux
+    steps:
+      - run: echo 'export GOPATH=$HOME/go' >> $BASH_ENV
+      - run: echo 'export PATH=$GOPATH/bin:$PATH' >> $BASH_ENV
+
+      - run: mkdir /tmp/artifacts
+      - run: echo 'export CIRCLE_ARTIFACTS=/tmp/artifacts' >> $BASH_ENV
+
+      - run: pacman -Sy --noconfirm bazel openscad clang python python-pip git go openssh
+      - run: pip install solidpython numpy
+      - run: go get -u github.com/justbuchanan/ci-status
+      - run: ls $GOPATH/bin
+      - run: echo $GOPATH
+      - checkout
+      - run: ci-status --context planter --description "Planter" "bazel build planter:planter_scad"
+      - run: ci-status --context box --description "Lasercut box template" "bazel build lasercut_box:box_svg"
+      - store_artifacts:
+          path: bazel-bin
+      - store_artifacts:
+          path: /tmp/artifacts
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - build
