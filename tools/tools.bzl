@@ -1,11 +1,16 @@
 # utilities for working with openscad and solidpython models
 
 def _solidpy_to_scad(ctx):
+    args = ['--output', ctx.outputs.out.path, ctx.file.file.path, '--header', '$fn=%d;' % ctx.attr.resolution]
+    outs = [ctx.outputs.out]
+    if ctx.outputs.bom_out:
+      outs.append(ctx.outputs.bom_out)
+      args += ['--bom_output', ctx.outputs.bom_out.path]
     ctx.actions.run(
         inputs=ctx.files.file + ctx.files.deps + ctx.files.py_deps,
-        outputs=[ctx.outputs.out],
+        outputs=outs,
         progress_message="toscad;",
-        arguments=['--output', ctx.outputs.out.path, ctx.file.file.path, '--header', '$fn=%d;' % ctx.attr.resolution],
+        arguments=args,
         executable=ctx.executable._render_tool,
     )
 
@@ -14,6 +19,7 @@ solidpy_to_scad = rule(
     attrs = {
         "file": attr.label(allow_files=True, mandatory=True, single_file=True),
         "out": attr.output(mandatory=True),
+        "bom_out": attr.output(mandatory=False),
         "_render_tool": attr.label(cfg="host", executable=True, allow_files=True, default=Label("//tools:render")),
         "deps": attr.label_list(allow_files=True),
         "py_deps": attr.label_list(allow_files=True),
@@ -77,7 +83,7 @@ tmp_scad_file = rule(
 # does, this accepts a "toplevel" argument that lets you define what to render
 # as a snippet of python that's evaluated within the context of the file.
 # TODO: integrate this with the stl, png, etc outputs
-# TODO: evaluate snippet in python, not scad 
+# TODO: evaluate snippet in python, not scad
 def scad_part(name, file, toplevel, deps=[]):
     tmpfile = name + "_tmp.scad"
     tmp_scad_file(name=name + "_tmp_scad", file=file, output=tmpfile, toplevel=toplevel)
@@ -126,6 +132,7 @@ def solidpy_model(name, file, deps=[], py_deps=[], scad_resolution=100):
         name=name + '_scad',
         file=file,
         out=name + '.scad',
+        bom_out = name + '_bom.txt',
         deps=deps,
         py_deps=py_deps,
         resolution=scad_resolution,

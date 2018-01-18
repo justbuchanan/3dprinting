@@ -13,6 +13,7 @@ import argparse
 import subprocess as proc
 from subprocess import DEVNULL
 import os
+import util
 import imp
 
 
@@ -37,9 +38,14 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, required=True)
     parser.add_argument('--header', type=str, default='$fn=30;', help="Scad file header. May include $fn setting.")
     parser.add_argument('--toplevel_expr', type=str, default='model', help="")
+    parser.add_argument('--bom_output', type=str,help="bom file output")
     args = parser.parse_args()
 
-    machine = load_model(args.file)
+    model = load_model(args.file)
 
     scad_filename = args.output
-    render_model(machine, scad_filename, header=args.header)
+    render_model(model, scad_filename, header=args.header)
+
+    if args.bom_output:
+        with open(args.bom_output, "w") as f:
+            f.write(util.generate_bom(model))
