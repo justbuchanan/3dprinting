@@ -2,6 +2,13 @@ import os
 import sys
 from solid import *
 
+# numpy fails to load without this hack
+# TODO: fix
+try:
+    os.environ["PATH"]
+except:
+    os.environ["PATH"] = ""
+
 import argparse
 import subprocess as proc
 from subprocess import DEVNULL
