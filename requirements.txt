@@ -1,2 +1,2 @@
 numpy
-git+https://github.com/solidcode/solidpython
+git+https://github.com/justbuchanan/solidpython#egg=relative_includes
