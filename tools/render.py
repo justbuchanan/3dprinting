@@ -31,14 +31,19 @@ def render_model(scadmodel, outfile, header):
     with open(outfile, 'w') as f:
         f.write(scad_render(scadmodel, file_header=header))
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         'Render a solidpython model/file to openscad.')
     parser.add_argument('file')
     parser.add_argument('--output', type=str, required=True)
-    parser.add_argument('--header', type=str, default='$fn=30;', help="Scad file header. May include $fn setting.")
+    parser.add_argument(
+        '--header',
+        type=str,
+        default='$fn=30;',
+        help="Scad file header. May include $fn setting.")
     parser.add_argument('--toplevel_expr', type=str, default='model', help="")
-    parser.add_argument('--bom_output', type=str,help="bom file output")
+    parser.add_argument('--bom_output', type=str, help="bom file output")
     args = parser.parse_args()
 
     model = load_model(args.file)
