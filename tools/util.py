@@ -450,12 +450,14 @@ def part_tree_connector_str(model):
 
 def part_grid(model, spacing=100):
     all_parts = sorted(iterate_parts(model), key=lambda p: p.typename)
+    return item_grid(all_parts, spacing)
 
-    grid_sz = math.ceil(math.sqrt(len(all_parts)))
+def item_grid(items, spacing=100):
+    grid_sz = math.ceil(math.sqrt(len(items)))
     part_grid = union()
 
-    for i in range(len(all_parts)):
-        p = all_parts[i]
+    for i in range(len(items)):
+        p = items[i]
         x = i % grid_sz
         y = floor(i / grid_sz)
         txt = translate([0, -30, 0])(text(p.typename))
