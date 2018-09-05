@@ -110,7 +110,8 @@ def generalized_pot(extrude_func,
     )
 
 
-def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
+# @param sizes=[pot_l, pot_w]
+def rounded_rect_extrude_func(prof, r, sizes):
     edges = []
 
     for i in range(4):

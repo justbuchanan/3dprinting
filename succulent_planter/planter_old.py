@@ -175,7 +175,7 @@ def square_pot():
 
 def rounded_rect_pot(r):
     return S.union()(util.generalized_pot(
-        lambda prof: util.rounded_rect_extrude_func(prof, r),
+        lambda prof: util.rounded_rect_extrude_func(prof, r,sizes=[pot_l,pot_w]),
         base_th=min_th * 2,
         prof_p1=prof_p1,
         prof_n1=prof_n1,
