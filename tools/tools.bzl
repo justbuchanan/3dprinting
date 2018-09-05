@@ -59,15 +59,15 @@ scad_render = rule(
 #         stderr=DEVNULL)
 #     print('wrote %s' % png_filename)
 
-def _tmp_scad_file(ctx):
+def _part_scad_file(ctx):
     ctx.actions.write(
         output = ctx.outputs.output,
         content = "include <%s>;\n%s;" % (ctx.file.file.path, ctx.attr.toplevel),
         is_executable = False,
     )
 
-tmp_scad_file = rule(
-    implementation = _tmp_scad_file,
+part_scad_file = rule(
+    implementation = _part_scad_file,
     attrs = {
         "file": attr.label(allow_files = True, mandatory = True, single_file = True),
         "output": attr.output(mandatory = True),
@@ -81,8 +81,8 @@ tmp_scad_file = rule(
 # TODO: integrate this with the stl, png, etc outputs
 # TODO: evaluate snippet in python, not scad
 def scad_part(name, file, toplevel, deps = []):
-    tmpfile = name + "_tmp.scad"
-    tmp_scad_file(name = name + "_tmp_scad", file = file, output = tmpfile, toplevel = toplevel)
+    tmpfile = name + ".scad"
+    part_scad_file(name = name + "_scad", file = file, output = tmpfile, toplevel = toplevel)
 
     scad_render(
         name = name + "_stl",
