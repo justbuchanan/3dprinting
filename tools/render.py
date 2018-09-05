@@ -14,14 +14,15 @@ import subprocess as proc
 from subprocess import DEVNULL
 import os
 import util
-import imp
+import importlib.machinery
 
 
 # Imports the python file at the given path and reads the "model" variable from
 # it.
 def load_model(filepath):
     sys.path.append(os.getcwd())
-    module = imp.load_source('module', filepath)
+    loader = importlib.machinery.SourceFileLoader('module', filepath)
+    module = loader.load_module()
     return module.model
 
 
