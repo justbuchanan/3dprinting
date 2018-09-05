@@ -2,30 +2,14 @@
 
 import math
 import numpy as np
-from sympy import *
+import sympy
 import solid as S
+import succulent_planter.util as util
 
 fn = 100
 
-INC = 0.0001
-
-GOLDEN_RATIO = 1.61803398875
-
-# commit = "f7c92"
-# EMBOSS_TEXT = commit
-EMBOSS_TEXT = "thing:3084331"
-
-
-def rad2deg(r):
-    return r * 180 / math.pi
-
-
-def deg2rad(r):
-    return r * math.pi / 180.0
-
-
 # we're trying to solve for the location of the ellipse center
-ell_center_x, ell_center_y = symbols('ell_center_x ell_center_y')
+ell_center_x, ell_center_y = sympy.symbols('ell_center_x ell_center_y')
 ell_center = [ell_center_x, ell_center_y]
 
 edge_r = 1
@@ -55,41 +39,17 @@ upper_meet_pt = edge_circ_pt + edge_r * np.array(
 bottom_meet_pt = np.array([min_th, 0])
 
 
-# Simple ellipse - axis-aligned
-# @param pt A point on the ellipse
-# @param ctr The center of the ellipse
-# @param H horizontal axis
-# @param V vertical axis length
-def eq_simple_ellipse(pt, ctr, H, V):
-    return Eq((pt[0] - ctr[0])**2 / H**2 + (pt[1] - ctr[1])**2 / V**2, 1)
-
-
-# Generalized ellipse - can be slanted
-# @param pt A point on the ellipse
-# @param ctr The center of the ellipse
-# @param H horizontal axis length
-# @param V vertical axis length
-# @param rot counter-clockwise rotation (in radians)
-#
-# https://math.stackexchange.com/questions/426150
-def eq_gen_ellipse(pt, ctr, H, V, rot=0):
-    return Eq(((pt[0] - ctr[0]) * math.cos(rot) +
-               (pt[1] - ctr[1]) * math.sin(rot))**2 / H**2 + (
-                   (pt[0] - ctr[0]) * math.sin(rot) -
-                   (pt[1] - ctr[1]) * math.cos(rot))**2 / V**2, 1)
-
-
 def solve_for_ell_center():
     # Calculate the center of the ellipse given the two points we want it to intersect
     eqs = [
         # intersection with bottom of pot
-        eq_gen_ellipse(bottom_meet_pt, ell_center, ellH, ellV,
-                       -deg2rad(ellipse_angle_deg)),
+        util.eq_gen_ellipse(bottom_meet_pt, ell_center, ellH, ellV,
+                            -util.deg2rad(ellipse_angle_deg)),
         # intersection with upper edge of pot
-        eq_gen_ellipse(upper_meet_pt, ell_center, ellH, ellV,
-                       -deg2rad(ellipse_angle_deg)),
+        util.eq_gen_ellipse(upper_meet_pt, ell_center, ellH, ellV,
+                            -util.deg2rad(ellipse_angle_deg)),
     ]
-    possible_ell_centers = solve(eqs, ell_center)
+    possible_ell_centers = sympy.solve(eqs, ell_center)
     print(possible_ell_centers)
 
     # filter out imaginary solutions
@@ -153,7 +113,7 @@ def draw_profile():
 
 
 pot_l = 120
-pot_lw_ratio = GOLDEN_RATIO
+pot_lw_ratio = util.GOLDEN_RATIO
 pot_w = pot_l / pot_lw_ratio
 
 
@@ -172,54 +132,6 @@ def hole_pattern():
             obj += S.translate([big_hole_dx * i, big_hole_dy * j,
                                 0])(S.circle(r1))
     return obj
-
-
-# Extrudes the positive profiles and subtracts the negative extrusions.
-# Adds a flat bottom with holes.
-def generalized_pot(extrude_func,
-                    prof_n1=prof_n1,
-                    prof_p1=prof_p1,
-                    holes=True,
-                    base_th=3):
-    base_prof = S.difference()(
-        # main profile
-        S.difference()(
-            prof_p1(),
-            prof_n1(),
-        ),
-
-        # cut off everything above the base height
-        S.translate([-pot_l * 5, base_th])(S.square(pot_l * 10), ),
-    )
-    base = S.hull()(extrude_func(base_prof))
-
-    # bottom holes
-    if holes:
-        base = S.difference()(
-            base,
-            S.translate([0, 0, -INC])(S.linear_extrude(base_th * 2)(
-                hole_pattern()), ),
-        )
-
-    # embossed text
-    emboss_depth = 0.4
-    font_size = 6
-    if len(EMBOSS_TEXT):
-        base = S.difference()(
-            base,
-
-            # text
-            S.translate([0, 10, base_th - emboss_depth])(S.linear_extrude(
-                emboss_depth * 2)(S.text(
-                    EMBOSS_TEXT,
-                    halign="center",
-                    valign="center",
-                    size=font_size)), ))
-
-    return S.difference()(
-        S.union()(extrude_func(prof_p1), base),
-        extrude_func(prof_n1),
-    )
 
 
 def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
@@ -264,8 +176,13 @@ def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
 
 
 def rounded_rect_pot(r):
-    return S.union()(generalized_pot(
-        lambda prof: rounded_rect_extrude_func(prof, r), base_th=min_th * 2), )
+    return S.union()(util.generalized_pot(
+        lambda prof: rounded_rect_extrude_func(prof, r),
+        base_th=min_th * 2,
+        prof_n1=prof_n1,
+        prof_p1=prof_p1,
+        pot_l=pot_l,
+        pot_w=pot_w))
 
 
 def rounded_rect_tray(r):
@@ -302,10 +219,11 @@ def rounded_rect_tray(r):
     prof_n1 = S.union()
 
     main_tray = S.union()(
-            generalized_pot(
+            util.generalized_pot(
                 lambda prof: rounded_rect_extrude_func(prof, r, sizes=[pot_l+extra_width, pot_w+extra_width]),
                 prof_p1=prof_p1,
                 prof_n1=prof_n1,
+                pot_l=pot_l,pot_w=pot_w,
                 holes=False,
                 base_th = 2),
         )
