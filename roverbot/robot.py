@@ -138,9 +138,8 @@ leg_sideplate_th = 2
 
 def leg_main(th=wheel_th, outer_scale=0.8, cutout_scale=1.2, **kwargs):
     def wheels(scale=1):
-        return union()(circle(wheel_r * scale),
-                       translate([leg_wheel_dist, 0])(circle(
-                           leg_front_wheel_r * scale)))
+        return union()(circle(wheel_r * scale), translate([leg_wheel_dist, 0])(
+            circle(leg_front_wheel_r * scale)))
 
     def main_chunk():
         return union()(

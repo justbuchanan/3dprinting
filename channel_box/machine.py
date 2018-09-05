@@ -33,8 +33,8 @@ def channel_profile(w=20):
         xsign = 1 if i % 2 == 0 else -1
         ysign = 1 if i < 2 else -1
         mn += rotate(i * 90)(union()(
-            rotate(45)(translate([0, -bw / 2])(square([hdiag - outer_r, bw])),
-                       ),
+            rotate(45)(translate([0, -bw / 2])(square([hdiag - outer_r,
+                                                       bw])), ),
             translate([w / 2 - outer_r, w / 2 - outer_r])(circle(outer_r)),
             corner_half(),
             mirror([1, 1])(corner_half(), ),

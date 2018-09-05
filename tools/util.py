@@ -452,6 +452,7 @@ def part_grid(model, spacing=100):
     all_parts = sorted(iterate_parts(model), key=lambda p: p.typename)
     return item_grid(all_parts, spacing)
 
+
 def item_grid(items, spacing=100):
     grid_sz = math.ceil(math.sqrt(len(items)))
     part_grid = union()

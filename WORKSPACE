@@ -18,7 +18,7 @@ git_repository(
     remote = "https://github.com/bazelbuild/rules_python.git",
 )
 
-load("@io_bazel_rules_python//python:pip.bzl", "pip_repositories", "pip_import")
+load("@io_bazel_rules_python//python:pip.bzl", "pip_import", "pip_repositories")
 
 pip_repositories()
 
