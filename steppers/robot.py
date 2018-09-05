@@ -5,7 +5,7 @@ from solid.utils import *
 from util import *
 
 # nema17 stepper motor
-use('robot/utl.NEMA.scad')
+use('steppers/utl.NEMA.scad')
 
 Motor = Part("Nema 17 Stepper Motor")(nema17(True, True))
 
