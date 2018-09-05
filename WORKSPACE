@@ -1,13 +1,13 @@
 new_git_repository(
     name = "scad_utils",
-    build_file = "scad_utils.BUILD",
+    build_file = "third_party/scad_utils.BUILD",
     commit = "484d39bc2fd19cf6903c8e92e01af40a77276e66",
     remote = "https://github.com/OskarLinde/scad-utils",
 )
 
 new_git_repository(
     name = "mcad",
-    build_file = "mcad.BUILD",
+    build_file = "third_party/mcad.BUILD",
     commit = "818265f4a6f78e1e7e258228c0763c345c1fdc04",
     remote = "https://github.com/openscad/MCAD",
 )
