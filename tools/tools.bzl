@@ -124,7 +124,7 @@ slice_stl_to_gcode = rule(
     },
 )
 
-def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, three_d=True):
+def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, three_d = True):
     solidpy_to_scad(
         name = name + "_scad",
         file = file,
