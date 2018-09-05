@@ -11,11 +11,13 @@ INC = 0.0001
 
 GOLDEN_RATIO = 1.61803398875
 
+
 def rad2deg(r):
-    return r*180/math.pi
+    return r * 180 / math.pi
+
 
 def deg2rad(r):
-    return r*math.pi/180.0
+    return r * math.pi / 180.0
 
 
 # Extrude a given profile along an elliptical path.
@@ -23,23 +25,19 @@ def deg2rad(r):
 #       command
 def along_ellipse(x1, x2, fn_a, d2profile):
     # Place an object at a certain point along an elliiptical path
-    def place(x1,x2,aa,e, obj):
-        return S.translate([x2*math.sin(aa),x1*math.cos(aa),0])(
-                S.rotate(rad2deg(-aa+math.pi/2))(
-                    S.rotate([90,0,0])(
-                        S.linear_extrude(e)(obj))))
-
+    def place(x1, x2, aa, e, obj):
+        return S.translate([x2 * math.sin(aa), x1 * math.cos(aa), 0])(S.rotate(
+            rad2deg(-aa + math.pi / 2))(S.rotate([90, 0, 0])(
+                S.linear_extrude(e)(obj))))
 
     obj = S.union()
 
     # small thickness of the 2d profile
     e = 0.05
     for a in range(0, fn_a):
-        aa=a*2*math.pi/fn_a
-        obj += S.hull()(
-            place(x1,x2,aa,e, d2profile),
-            place(x1,x2,aa+2*math.pi/fn_a,e, d2profile)
-        )
+        aa = a * 2 * math.pi / fn_a
+        obj += S.hull()(place(x1, x2, aa, e, d2profile),
+                        place(x1, x2, aa + 2 * math.pi / fn_a, e, d2profile))
     return obj
 
 
@@ -68,9 +66,11 @@ edge_circ_pt = np.array([slant_dx + brim_w - edge_r, h - edge_r])
 # Decide the slope we want, then find the point on the circle with that slope
 meet_slope = math.pi / 6
 # TODO: better math
-upper_meet_pt = edge_circ_pt + edge_r*np.array([math.sin(meet_slope), -math.cos(meet_slope)])
+upper_meet_pt = edge_circ_pt + edge_r * np.array(
+    [math.sin(meet_slope), -math.cos(meet_slope)])
 
 bottom_meet_pt = np.array([min_th, 0])
+
 
 # Simple ellipse - axis-aligned
 # @param pt A point on the ellipse
@@ -78,8 +78,8 @@ bottom_meet_pt = np.array([min_th, 0])
 # @param H horizontal axis
 # @param V vertical axis length
 def eq_simple_ellipse(pt, ctr, H, V):
-    return Eq( (pt[0] - ctr[0])**2 / H**2 +
-               (pt[1] - ctr[1])**2 / V**2, 1)
+    return Eq((pt[0] - ctr[0])**2 / H**2 + (pt[1] - ctr[1])**2 / V**2, 1)
+
 
 # Generalized ellipse - can be slanted
 # @param pt A point on the ellipse
@@ -90,18 +90,21 @@ def eq_simple_ellipse(pt, ctr, H, V):
 #
 # https://math.stackexchange.com/questions/426150
 def eq_gen_ellipse(pt, ctr, H, V, rot=0):
-    return Eq( ( (pt[0] - ctr[0])*math.cos(rot) + (pt[1] - ctr[1])*math.sin(rot) )**2 / H**2 +
-               ( (pt[0] - ctr[0])*math.sin(rot) - (pt[1] - ctr[1])*math.cos(rot) )**2 / V**2,
-               1
-            )
+    return Eq(((pt[0] - ctr[0]) * math.cos(rot) +
+               (pt[1] - ctr[1]) * math.sin(rot))**2 / H**2 + (
+                   (pt[0] - ctr[0]) * math.sin(rot) -
+                   (pt[1] - ctr[1]) * math.cos(rot))**2 / V**2, 1)
+
 
 def solve_for_ell_center():
     # Calculate the center of the ellipse given the two points we want it to intersect
     eqs = [
         # intersection with bottom of pot
-        eq_gen_ellipse(bottom_meet_pt, ell_center, ellH, ellV, -deg2rad(ellipse_angle_deg)),
+        eq_gen_ellipse(bottom_meet_pt, ell_center, ellH, ellV,
+                       -deg2rad(ellipse_angle_deg)),
         # intersection with upper edge of pot
-        eq_gen_ellipse(upper_meet_pt, ell_center, ellH, ellV, -deg2rad(ellipse_angle_deg)),
+        eq_gen_ellipse(upper_meet_pt, ell_center, ellH, ellV,
+                       -deg2rad(ellipse_angle_deg)),
     ]
     possible_ell_centers = solve(eqs, ell_center)
     print(possible_ell_centers)
@@ -111,73 +114,65 @@ def solve_for_ell_center():
         for s in solutions:
             if not any(np.iscomplex([complex(d) for d in s])):
                 yield s
+
     possible_ell_centers = list(filter_solns(possible_ell_centers))
 
     if len(possible_ell_centers) == 0:
         raise RuntimeError("No solution found for ellipse center")
 
     if len(possible_ell_centers) > 1:
-        possible_ell_centers = [min(possible_ell_centers, key=lambda pt: pt[1])]
+        possible_ell_centers = [
+            min(possible_ell_centers, key=lambda pt: pt[1])
+        ]
         pass
 
     return possible_ell_centers[0]
 
-ell_center = solve_for_ell_center()
 
+ell_center = solve_for_ell_center()
 
 # The below shapes are arranged like:
 #
 #           *
 #     *
-#    
+#
 #
 #
 #
 #    ===
 #
 # upper brim outer edge circle
-brim_edge_circ  = S.translate(edge_circ_pt)(S.circle(edge_r))
-upper_inner_circ = S.translate([slant_dx + edge_r, edge_circ_pt[1] -1 ])(S.circle(edge_r))
+brim_edge_circ = S.translate(edge_circ_pt)(S.circle(edge_r))
+upper_inner_circ = S.translate([slant_dx + edge_r,
+                                edge_circ_pt[1] - 1])(S.circle(edge_r))
 bottom_rect = S.square([min_th, 0.1])
 
 ell_scale = ellV / ellH
 print("sc: %f" % ell_scale)
 
-prof_p1 = S.hull()(
-    bottom_rect,
-    brim_edge_circ,
-    upper_inner_circ
-)
+prof_p1 = S.hull()(bottom_rect, brim_edge_circ, upper_inner_circ)
 
 # cut out ellipse
-prof_n1 = S.translate(ell_center)(
-            S.rotate(-ellipse_angle_deg)(
-                S.scale([1, ell_scale])(
-                    S.circle(ellH)
-                )
-              )
-            )
+prof_n1 = S.translate(ell_center)(S.rotate(-ellipse_angle_deg)(S.scale(
+    [1, ell_scale])(S.circle(ellH))))
+
 
 def draw_profile():
     obj = prof_p1 + S.color("black")(prof_n1)
 
     # draw intersection points
     if True:
-        obj += S.color("red")(
-            S.linear_extrude(10)(
-                S.union()(
-                    S.translate(bottom_meet_pt)(S.circle(0.2)),
-                    S.translate(upper_meet_pt)(S.circle(0.2)),
-                )
-            )
-        )
+        obj += S.color("red")(S.linear_extrude(10)(S.union()(
+            S.translate(bottom_meet_pt)(S.circle(0.2)),
+            S.translate(upper_meet_pt)(S.circle(0.2)),
+        )))
     return obj
-
 
 
 pot_l = 120
 pot_lw_ratio = GOLDEN_RATIO
 pot_w = pot_l / pot_lw_ratio
+
 
 def hole_pattern():
     obj = S.union()
@@ -189,10 +184,10 @@ def hole_pattern():
 
     obj += S.circle(r1)
 
-    for i in [-1,1]:
-        for j in [-1,1]:
-            obj += S.translate([big_hole_dx * i, big_hole_dy * j, 0])(
-                S.circle(r1))
+    for i in [-1, 1]:
+        for j in [-1, 1]:
+            obj += S.translate([big_hole_dx * i, big_hole_dy * j,
+                                0])(S.circle(r1))
     return obj
 
 
@@ -208,29 +203,31 @@ def hole_pattern():
 #             )
 #         )
 
-# Extrudes the positive profiles and subtracts the negative extrusions.
-def generalized_pot(extrude_func, prof_n1=prof_n1, prof_p1=prof_p1, holes=True, base_th=3):
-    base_prof = S.difference()(
-            # main profile
-            S.difference()(
-                prof_p1(),
-                prof_n1(),
-            ),
 
-            # cut off everything above the base height
-            S.translate([-pot_l*5, base_th])(
-                S.square(pot_l*10),
-            ),
-        )
+# Extrudes the positive profiles and subtracts the negative extrusions.
+def generalized_pot(extrude_func,
+                    prof_n1=prof_n1,
+                    prof_p1=prof_p1,
+                    holes=True,
+                    base_th=3):
+    base_prof = S.difference()(
+        # main profile
+        S.difference()(
+            prof_p1(),
+            prof_n1(),
+        ),
+
+        # cut off everything above the base height
+        S.translate([-pot_l * 5, base_th])(S.square(pot_l * 10), ),
+    )
     base = S.hull()(extrude_func(base_prof))
 
     # bottom holes
     if holes:
         base = S.difference()(
             base,
-            S.translate([0,0,-INC])(
-                S.linear_extrude(base_th*2)(hole_pattern()),
-            ),
+            S.translate([0, 0, -INC])(S.linear_extrude(base_th * 2)(
+                hole_pattern()), ),
         )
 
     # embossed text
@@ -242,73 +239,54 @@ def generalized_pot(extrude_func, prof_n1=prof_n1, prof_p1=prof_p1, holes=True, 
             base,
 
             # text
-            S.translate([0, 10, base_th-emboss_depth])(
-                S.linear_extrude(emboss_depth*2)(
-                    S.text(commit, halign="center", valign="center", size=font_size)
-                ),
-            )
-        )
+            S.translate([0, 10, base_th - emboss_depth])
+            (S.linear_extrude(emboss_depth * 2)(S.text(
+                commit, halign="center", valign="center", size=font_size)), ))
 
     return S.difference()(
-        S.union()(
-            extrude_func(prof_p1),
-            base
-        ),
-
+        S.union()(extrude_func(prof_p1), base),
         extrude_func(prof_n1),
     )
 
 
 def pot():
     return S.union()(
-        generalized_pot(lambda prof: along_ellipse(pot_l/2, pot_w/2, fn, prof), base_th = min_th * 2),
+        generalized_pot(
+            lambda prof: along_ellipse(pot_l / 2, pot_w / 2, fn, prof),
+            base_th=min_th * 2),
         # bottom_plate(),
     )
 
 
 def pot_ell3():
     s2 = 0.9
-    rectl = pot_l*2
+    rectl = pot_l * 2
 
     def ell_main():
-        return S.translate([0,0,pot_w])(
+        return S.translate([0, 0, pot_w])(
             S.difference()(
                 S.scale([1, pot_lw_ratio, 1])(S.sphere(pot_w)),
 
                 # cut out inside
-                S.scale([s2, pot_lw_ratio*s2, s2])(
-                    S.sphere(pot_w)
-                ),
-
-                S.translate([-rectl/2, -rectl/2, -pot_w+50])(
-                    S.cube([rectl, rectl, rectl])
-                ),
-            )
-        )
+                S.scale([s2, pot_lw_ratio * s2, s2])(S.sphere(pot_w)),
+                S.translate([-rectl / 2, -rectl / 2,
+                             -pot_w + 50])(S.cube([rectl, rectl, rectl])),
+            ))
 
     base_scale = 0.7
 
     def bottom(th=min_th):
-        return S.linear_extrude(th)(
-                S.scale([base_scale, pot_lw_ratio*base_scale, base_scale])(
-                    S.circle(pot_w)
-                )
-            )
+        return S.linear_extrude(th)(S.scale(
+            [base_scale, pot_lw_ratio * base_scale,
+             base_scale])(S.circle(pot_w)))
 
-    return ell_main() + bottom(min_th*2)
-
+    return ell_main() + bottom(min_th * 2)
 
 
 def square_pot():
-    return S.translate([0, 0, h/2])(
-            S.difference()(
-                S.cube([pot_w, pot_l, h], center=True),
-                S.translate([0, 0, min_th])(
-                    S.cube([pot_w-min_th*2, pot_l-min_th*2, h], center=True)
-                )
-            )
-        )
-
+    return S.translate([0, 0, h / 2])(S.difference()(S.cube(
+        [pot_w, pot_l, h], center=True), S.translate([0, 0, min_th])(S.cube(
+            [pot_w - min_th * 2, pot_l - min_th * 2, h], center=True))))
 
 
 def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
@@ -322,17 +300,17 @@ def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
         if i == 0:
             tx[1] = -r
         if i == 1:
-            tx[0] = -sizes[1]+r
+            tx[0] = -sizes[1] + r
         if i == 2:
-            tx[0] = - sizes[1]
-            tx[1] = -sizes[0]+r
+            tx[0] = -sizes[1]
+            tx[1] = -sizes[0] + r
         if i == 3:
             tx[0] = -r
             tx[1] = -sizes[0]
 
-        edge = S.translate(tx)(S.rotate([90, 0, i*90])(S.linear_extrude(l-r*2)(prof)))
+        edge = S.translate(tx)(S.rotate([90, 0, i * 90])(
+            S.linear_extrude(l - r * 2)(prof)))
         edges.append(edge)
-
 
         tx2 = list(tx)
         if i == 0 or i == 3:
@@ -346,25 +324,22 @@ def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
             tx2[0] += r
 
         edges.append(
-            S.translate(tx2)(
-                S.rotate([0,0, i*90])(
-                    S.rotate_extrude(90)(S.translate([r, 0, 0])(prof)
-                )
-            )))
+            S.translate(tx2)(S.rotate([0, 0, i * 90])(S.rotate_extrude(90)(
+                S.translate([r, 0, 0])(prof)))))
 
-    obj = S.translate([sizes[1]/2, sizes[0]/2, 0])(S.union()(edges))
+    obj = S.translate([sizes[1] / 2, sizes[0] / 2, 0])(S.union()(edges))
     return obj
 
 
 def rounded_rect_pot(r):
-    return S.union()(
-            generalized_pot(lambda prof: rounded_rect_extrude_func(prof, r), base_th = min_th * 2),
-        )
+    return S.union()(generalized_pot(
+        lambda prof: rounded_rect_extrude_func(prof, r), base_th=min_th * 2), )
+
 
 def rounded_rect_tray(r):
     extra_width = 25
 
-    r = r + extra_width/2
+    r = r + extra_width / 2
 
     edge_r = 1
     min_th = 1.5
@@ -379,26 +354,21 @@ def rounded_rect_tray(r):
     # Decide the slope we want, then find the point on the circle with that slope
     meet_slope = math.pi / 6
     # TODO: better math
-    upper_meet_pt = edge_circ_pt + edge_r*np.array([math.sin(meet_slope), -math.cos(meet_slope)])
+    upper_meet_pt = edge_circ_pt + edge_r * np.array(
+        [math.sin(meet_slope), -math.cos(meet_slope)])
 
     bottom_meet_pt = np.array([min_th, 0])
 
-
     # upper brim outer edge circle
-    brim_edge_circ  = S.translate(edge_circ_pt)(S.circle(edge_r))
-    upper_inner_circ = S.translate([slant_dx + edge_r, edge_circ_pt[1] -0.5])(
-                            S.circle(edge_r)
-                        )
+    brim_edge_circ = S.translate(edge_circ_pt)(S.circle(edge_r))
+    upper_inner_circ = S.translate([slant_dx + edge_r,
+                                    edge_circ_pt[1] - 0.5])(S.circle(edge_r))
     bottom_rect = S.square([min_th, 0.1])
 
     # ell_scale = ellV / ellH
     # print("sc: %f" % ell_scale)
 
-    prof_p1 = S.hull()(
-        bottom_rect,
-        brim_edge_circ,
-        upper_inner_circ
-    )
+    prof_p1 = S.hull()(bottom_rect, brim_edge_circ, upper_inner_circ)
 
     prof_n1 = S.union()
 
@@ -413,36 +383,28 @@ def rounded_rect_tray(r):
 
     pot = rounded_rect_pot(rpot_r)
 
-
     slice_ht = h - 1
     slice_th = 2
     slice_inset = 30
     slice_y_inset = 30 + 20
     pot_z_inset = 3
 
-
     sides = S.union()(
-        S.translate([-slice_th/2, -pot_l, 0])(
-            S.cube([slice_th, pot_l-slice_y_inset, slice_ht])),
-
-        S.translate([-slice_th/2, slice_y_inset, 0])(
-            S.cube([slice_th, pot_l, slice_ht])),
-    ) 
+        S.translate([-slice_th / 2, -pot_l,
+                     0])(S.cube([slice_th, pot_l - slice_y_inset, slice_ht])),
+        S.translate([-slice_th / 2, slice_y_inset,
+                     0])(S.cube([slice_th, pot_l, slice_ht])),
+    )
     for y in [-25, 25]:
         sides.add(
-            S.translate([-pot_w, y, 0])(
-                S.cube([pot_w-slice_inset, slice_th, slice_ht])
-            )
-        )
+            S.translate([-pot_w, y, 0])(S.cube(
+                [pot_w - slice_inset, slice_th, slice_ht])))
         sides.add(
-            S.translate([slice_inset, y, 0])(
-                S.cube([pot_w, slice_th, slice_ht])
-            )
-        )
+            S.translate([slice_inset, y,
+                         0])(S.cube([pot_w, slice_th, slice_ht])))
 
     main_tray = S.union()(
         main_tray,
-
         S.difference()(
             S.intersection()(
                 sides,
@@ -450,12 +412,8 @@ def rounded_rect_tray(r):
             ),
 
             # TODO: cutout pot
-
-            S.translate([0, 0, h-pot_z_inset])(
-                S.hull()(pot)
-            ),
-        )
-    )
+            S.translate([0, 0, h - pot_z_inset])(S.hull()(pot)),
+        ))
 
     return main_tray
 
@@ -464,22 +422,19 @@ rpot_r = pot_l / 4
 
 obj = S.union()(
     rounded_rect_pot(rpot_r),
-
-    S.translate([0,0,-25])(rounded_rect_tray(rpot_r)),
+    S.translate([0, 0, -25])(rounded_rect_tray(rpot_r)),
 
     # S.translate([-200, 0,0])(pot()),
 
     # S.translate([200,0,0])(pot_ell3()),
 
-  # S.translate([100,0])(draw_profile()),
+    # S.translate([100,0])(draw_profile()),
 
     # S.translate([0,200,0])(square_pot()),
-
 )
-
 
 if __name__ == '__main__':
     # write scad
     fname = "genpot.scad"
-    S.scad_render_to_file(obj, fname, file_header='$fn=%d;'%fn)
+    S.scad_render_to_file(obj, fname, file_header='$fn=%d;' % fn)
     print("Wrote scad: '%s'" % fname)

@@ -15,6 +15,7 @@ GOLDEN_RATIO = 1.61803398875
 # EMBOSS_TEXT = commit
 EMBOSS_TEXT = "thing:3084331"
 
+
 def rad2deg(r):
     return r * 180 / math.pi
 
@@ -73,9 +74,9 @@ def eq_simple_ellipse(pt, ctr, H, V):
 # https://math.stackexchange.com/questions/426150
 def eq_gen_ellipse(pt, ctr, H, V, rot=0):
     return Eq(((pt[0] - ctr[0]) * math.cos(rot) +
-               (pt[1] - ctr[1]) * math.sin(rot))**2 / H**2 +
-              ((pt[0] - ctr[0]) * math.sin(rot) -
-               (pt[1] - ctr[1]) * math.cos(rot))**2 / V**2, 1)
+               (pt[1] - ctr[1]) * math.sin(rot))**2 / H**2 + (
+                   (pt[0] - ctr[0]) * math.sin(rot) -
+                   (pt[1] - ctr[1]) * math.cos(rot))**2 / V**2, 1)
 
 
 def solve_for_ell_center():
@@ -208,9 +209,12 @@ def generalized_pot(extrude_func,
             base,
 
             # text
-            S.translate([0, 10, base_th - emboss_depth])
-            (S.linear_extrude(emboss_depth * 2)(S.text(
-                EMBOSS_TEXT, halign="center", valign="center", size=font_size)), ))
+            S.translate([0, 10, base_th - emboss_depth])(S.linear_extrude(
+                emboss_depth * 2)(S.text(
+                    EMBOSS_TEXT,
+                    halign="center",
+                    valign="center",
+                    size=font_size)), ))
 
     return S.difference()(
         S.union()(extrude_func(prof_p1), base),
@@ -346,7 +350,7 @@ def rounded_rect_tray(r):
 rpot_r = pot_l / 4
 
 obj = rounded_rect_pot(rpot_r) + S.translate([0, 0, -25])(
-        rounded_rect_tray(rpot_r))
+    rounded_rect_tray(rpot_r))
 
 if __name__ == '__main__':
     # write scad
