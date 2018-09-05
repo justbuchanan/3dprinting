@@ -124,7 +124,7 @@ slice_stl_to_gcode = rule(
     },
 )
 
-def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100):
+def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, three_d=True):
     solidpy_to_scad(
         name = name + "_scad",
         file = file,
@@ -134,20 +134,22 @@ def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100):
         py_deps = py_deps,
         resolution = scad_resolution,
     )
-    scad_render(
-        name = name + "_stl",
-        file = name + ".scad",
-        out = name + ".stl",
-        deps = deps,
-    )
-    scad_render(
-        name = name + "_svg",
-        file = name + ".scad",
-        out = name + ".svg",
-        deps = deps,
-    )
-    slice_stl_to_gcode(
-        name = name + "_gcode",
-        file = name + "_stl",
-        gcode_out = name + ".gcode",
-    )
+    if three_d:
+        scad_render(
+            name = name + "_stl",
+            file = name + ".scad",
+            out = name + ".stl",
+            deps = deps,
+        )
+        slice_stl_to_gcode(
+            name = name + "_gcode",
+            file = name + "_stl",
+            gcode_out = name + ".gcode",
+        )
+    else:
+        scad_render(
+            name = name + "_svg",
+            file = name + ".scad",
+            out = name + ".svg",
+            deps = deps,
+        )

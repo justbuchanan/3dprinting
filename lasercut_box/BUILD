@@ -7,4 +7,5 @@ solidpy_model(
         "//tools:util_py",
     ],
     scad_resolution = 100,
+    three_d=False,
 )
