@@ -349,11 +349,11 @@ def rounded_rect_tray(r):
 
 rpot_r = pot_l / 4
 
-obj = rounded_rect_pot(rpot_r) + S.translate([0, 0, -25])(
+model = rounded_rect_pot(rpot_r) + S.translate([0, 0, -25])(
     rounded_rect_tray(rpot_r))
 
 if __name__ == '__main__':
     # write scad
     fname = "genpot.scad"
-    S.scad_render_to_file(obj, fname, file_header='$fn=%d;' % fn)
+    S.scad_render_to_file(model, fname, file_header='$fn=%d;' % fn)
     print("Wrote scad: '%s'" % fname)
