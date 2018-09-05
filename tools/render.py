@@ -1,6 +1,11 @@
+import solid
+from subprocess import DEVNULL
+import argparse
+import importlib.machinery
 import os
+import subprocess as proc
 import sys
-from solid import *
+import util
 
 # numpy fails to load without this hack
 # TODO: fix
@@ -8,13 +13,6 @@ try:
     os.environ["PATH"]
 except:
     os.environ["PATH"] = ""
-
-import argparse
-import subprocess as proc
-from subprocess import DEVNULL
-import os
-import util
-import importlib.machinery
 
 
 # Imports the python file at the given path and reads the "model" variable from
@@ -30,7 +28,7 @@ def render_model(scadmodel, outfile, header):
     # save openscad file
     print('writing file: %s' % outfile)
     with open(outfile, 'w') as f:
-        f.write(scad_render(scadmodel, file_header=header))
+        f.write(solid.scad_render(scadmodel, file_header=header))
 
 
 if __name__ == '__main__':
