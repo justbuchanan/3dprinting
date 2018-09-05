@@ -9,8 +9,8 @@ filegroup(
 )
 
 solidpy_model(
-    name = "robot",
-    file = "robot.py",
+    name = "demo",
+    file = "demo.py",
     deps = [
         ":nema17",
     ],
