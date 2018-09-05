@@ -99,85 +99,25 @@ prof_p1 = S.hull()(bottom_rect, brim_edge_circ, upper_inner_circ)
 prof_n1 = S.translate(ell_center)(S.rotate(-ellipse_angle_deg)(S.scale(
     [1, ell_scale])(S.circle(ellH))))
 
+# def draw_profile():
+#     obj = prof_p1 + S.color("black")(prof_n1)
 
-def draw_profile():
-    obj = prof_p1 + S.color("black")(prof_n1)
-
-    # draw intersection points
-    if True:
-        obj += S.color("red")(S.linear_extrude(10)(S.union()(
-            S.translate(bottom_meet_pt)(S.circle(0.2)),
-            S.translate(upper_meet_pt)(S.circle(0.2)),
-        )))
-    return obj
-
+#     # draw intersection points
+#     if True:
+#         obj += S.color("red")(S.linear_extrude(10)(S.union()(
+#             S.translate(bottom_meet_pt)(S.circle(0.2)),
+#             S.translate(upper_meet_pt)(S.circle(0.2)),
+#         )))
+#     return obj
 
 pot_l = 120
 pot_lw_ratio = util.GOLDEN_RATIO
 pot_w = pot_l / pot_lw_ratio
 
 
-def hole_pattern():
-    obj = S.union()
-
-    r1 = 4
-
-    big_hole_dx = pot_w / 5
-    big_hole_dy = big_hole_dx * pot_lw_ratio
-
-    obj += S.circle(r1)
-
-    for i in [-1, 1]:
-        for j in [-1, 1]:
-            obj += S.translate([big_hole_dx * i, big_hole_dy * j,
-                                0])(S.circle(r1))
-    return obj
-
-
-def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
-    edges = []
-
-    for i in range(4):
-        l = sizes[i % 2]
-        tx = [0, 0, 0]
-
-        if i == 0:
-            tx[1] = -r
-        if i == 1:
-            tx[0] = -sizes[1] + r
-        if i == 2:
-            tx[0] = -sizes[1]
-            tx[1] = -sizes[0] + r
-        if i == 3:
-            tx[0] = -r
-            tx[1] = -sizes[0]
-
-        edge = S.translate(tx)(S.rotate([90, 0, i * 90])(
-            S.linear_extrude(l - r * 2)(prof)))
-        edges.append(edge)
-
-        tx2 = list(tx)
-        if i == 0 or i == 3:
-            tx2[0] -= r
-        if i == 1:
-            tx2[1] -= r
-        if i == 2:
-            tx2[0] += r
-        if i == 3:
-            tx2[1] += r
-            tx2[0] += r
-
-        edges.append(
-            S.translate(tx2)(S.rotate([0, 0, i * 90])(S.rotate_extrude(90)(
-                S.translate([r, 0, 0])(prof)))))
-
-    obj = S.translate([sizes[1] / 2, sizes[0] / 2, 0])(S.union()(edges))
-    return obj
-
-
 def rounded_rect_pot(r):
     return S.union()(util.generalized_pot(
-        lambda prof: rounded_rect_extrude_func(prof, r),
+        lambda prof: util.rounded_rect_extrude_func(prof, r),
         base_th=min_th * 2,
         prof_n1=prof_n1,
         prof_p1=prof_p1,
@@ -220,7 +160,7 @@ def rounded_rect_tray(r):
 
     main_tray = S.union()(
             util.generalized_pot(
-                lambda prof: rounded_rect_extrude_func(prof, r, sizes=[pot_l+extra_width, pot_w+extra_width]),
+                lambda prof: util.rounded_rect_extrude_func(prof, r, sizes=[pot_l+extra_width, pot_w+extra_width]),
                 prof_p1=prof_p1,
                 prof_n1=prof_n1,
                 pot_l=pot_l,pot_w=pot_w,

@@ -8,28 +8,6 @@ import succulent_planter.util as util
 
 fn = 100
 
-
-# Extrude a given profile along an elliptical path.
-# Note: @d2profile should be a convex since extrusions are done using the hull()
-#       command
-def along_ellipse(x1, x2, fn_a, d2profile):
-    # Place an object at a certain point along an elliiptical path
-    def place(x1, x2, aa, e, obj):
-        return S.translate([x2 * math.sin(aa), x1 * math.cos(aa), 0])(S.rotate(
-            util.rad2deg(-aa + math.pi / 2))(S.rotate([90, 0, 0])(
-                S.linear_extrude(e)(obj))))
-
-    obj = S.union()
-
-    # small thickness of the 2d profile
-    e = 0.05
-    for a in range(0, fn_a):
-        aa = a * 2 * math.pi / fn_a
-        obj += S.hull()(place(x1, x2, aa, e, d2profile),
-                        place(x1, x2, aa + 2 * math.pi / fn_a, e, d2profile))
-    return obj
-
-
 # we're trying to solve for the location of the ellipse center
 ell_center_x, ell_center_y = sympy.symbols('ell_center_x ell_center_y')
 ell_center = [ell_center_x, ell_center_y]
@@ -154,7 +132,7 @@ pot_w = pot_l / pot_lw_ratio
 def pot():
     return S.union()(
         util.generalized_pot(
-            lambda prof: along_ellipse(pot_l / 2, pot_w / 2, fn, prof),
+            lambda prof: util.along_ellipse(pot_l / 2, pot_w / 2, fn, prof),
             prof_p1=prof_p1,
             prof_n1=prof_n1,
             pot_l=pot_l,
@@ -195,51 +173,9 @@ def square_pot():
             [pot_w - min_th * 2, pot_l - min_th * 2, h], center=True))))
 
 
-def rounded_rect_extrude_func(prof, r, sizes=[pot_l, pot_w]):
-    edges = []
-
-    for i in range(4):
-        l = sizes[i % 2]
-        # opp_len = sizes[(i + 1) % 2]
-        tx = [0, 0, 0]
-
-        if i == 0:
-            tx[1] = -r
-        if i == 1:
-            tx[0] = -sizes[1] + r
-        if i == 2:
-            tx[0] = -sizes[1]
-            tx[1] = -sizes[0] + r
-        if i == 3:
-            tx[0] = -r
-            tx[1] = -sizes[0]
-
-        edge = S.translate(tx)(S.rotate([90, 0, i * 90])(
-            S.linear_extrude(l - r * 2)(prof)))
-        edges.append(edge)
-
-        tx2 = list(tx)
-        if i == 0 or i == 3:
-            tx2[0] -= r
-        if i == 1:
-            tx2[1] -= r
-        if i == 2:
-            tx2[0] += r
-        if i == 3:
-            tx2[1] += r
-            tx2[0] += r
-
-        edges.append(
-            S.translate(tx2)(S.rotate([0, 0, i * 90])(S.rotate_extrude(90)(
-                S.translate([r, 0, 0])(prof)))))
-
-    obj = S.translate([sizes[1] / 2, sizes[0] / 2, 0])(S.union()(edges))
-    return obj
-
-
 def rounded_rect_pot(r):
     return S.union()(util.generalized_pot(
-        lambda prof: rounded_rect_extrude_func(prof, r),
+        lambda prof: util.rounded_rect_extrude_func(prof, r),
         base_th=min_th * 2,
         prof_p1=prof_p1,
         prof_n1=prof_n1,
@@ -285,7 +221,7 @@ def rounded_rect_tray(r):
 
     main_tray = S.union()(
             util.generalized_pot(
-                lambda prof: rounded_rect_extrude_func(prof, r, sizes=[pot_l+extra_width, pot_w+extra_width]),
+                lambda prof: util.rounded_rect_extrude_func(prof, r, sizes=[pot_l+extra_width, pot_w+extra_width]),
                 prof_p1=prof_p1,
                 prof_n1=prof_n1,
                 pot_l=pot_l,pot_w=pot_w,
