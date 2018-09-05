@@ -26,7 +26,7 @@ pip_repositories()
 # @py_deps//:requirements.bzl, which itself exposes a pip_install method.
 pip_import(
     name = "py_deps",
-    requirements = "//:requirements.txt",
+    requirements = "//third_party:requirements.txt",
 )
 
 # Load the pip_install symbol for py_deps, and create the dependencies'
