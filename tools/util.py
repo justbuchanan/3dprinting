@@ -1,3 +1,6 @@
+# Credits:
+# A large chunk of this was borrowed from https://github.com/Obijuan/obiscad
+
 from solid import *
 from solid.utils import *
 import numpy as np
