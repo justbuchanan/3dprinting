@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import solid
 from subprocess import DEVNULL
 import argparse
@@ -9,9 +11,7 @@ import util
 
 # numpy fails to load without this hack
 # TODO: fix
-try:
-    os.environ["PATH"]
-except:
+if "PATH" not in os.environ:
     os.environ["PATH"] = ""
 
 
@@ -41,7 +41,6 @@ if __name__ == '__main__':
         type=str,
         default='$fn=30;',
         help="Scad file header. May include $fn setting.")
-    parser.add_argument('--toplevel_expr', type=str, default='model', help="")
     parser.add_argument('--bom_output', type=str, help="bom file output")
     args = parser.parse_args()
 
