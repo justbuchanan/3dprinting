@@ -13,10 +13,25 @@ jobs:
       - run: pacman -Sy --noconfirm bazel openscad clang python python-pip git go openssh
       - run: go get -u github.com/justbuchanan/ci-status
 
+      # TODO: bazel should handle this
+      - run: pip install sympy
+
       - checkout
 
-      - run: ci-status --context planter --description "Render all SVGs" "bazel build $(bazel query 'filter(.*_svg,...)')"
-      - run: ci-status --context planter --description "Generate alll .scad files" "bazel build $(bazel query 'filter(.*_scad,...)')"
+      - run: echo "export SCAD_MODELS=\"$(bazel query 'filter(.*_scad,...)')\"" >> $BASH_ENV
+      - run: echo $SCAD_MODELS
+      - run: bazel build $SCAD_MODELS
+      # - run: >-
+      #     ci-status
+      #     --context generate_scad
+      #     --description "Generate scad from solidpy"
+      #     "bazel build \"$SCAD_MODELS\""
+
+      - run: >-
+          ci-status
+          --context render_svgs
+          --description "Render all SVGs"
+          "bazel build $(bazel query 'filter(.*_svg,...)')"
 
       - store_artifacts:
           path: bazel-bin
