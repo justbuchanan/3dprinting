@@ -1,4 +1,5 @@
-# utilities for working with openscad and solidpython models
+"""utilities for working with openscad and solidpython models
+"""
 
 def _solidpy_to_scad(ctx):
     args = ["--output", ctx.outputs.out.path, ctx.file.file.path, "--header", "$fn=%d;" % ctx.attr.resolution]
@@ -75,19 +76,16 @@ part_scad_file = rule(
     },
 )
 
-# instead of using the "model" variable from the python file as solidpy_to_scad
+# Instead of using the "model" variable from the python file as solidpy_to_scad
 # does, this accepts a "toplevel" argument that lets you define what to render
-# as a snippet of python that's evaluated within the context of the file.
-# TODO: integrate this with the stl, png, etc outputs
-# TODO: evaluate snippet in python, not scad
-def scad_part(name, file, toplevel, deps = []):
+# as a snippet of scad code that's evaluated within the context of the file.
+def scad_part(name, file, toplevel, deps = [], three_d = True):
     tmpfile = name + ".scad"
     part_scad_file(name = name + "_scad", file = file, output = tmpfile, toplevel = toplevel)
-
-    scad_render(
-        name = name + "_stl",
+    scad_model(
+        name = name,
+        three_d = three_d,
         file = tmpfile,
-        out = name + ".stl",
         deps = deps + [file],
     )
 
@@ -95,7 +93,7 @@ def _slice_stl_to_gcode(ctx):
     # TODO: do better
     PRINTER_DEF = "/usr/share/cura/resources/definitions/prusa_i3.def.json"
 
-    ctx.action(
+    ctx.actions.run(
         inputs = ctx.files.file,
         outputs = [ctx.outputs.gcode_out],
         executable = ctx.executable._cura_engine_tool,
@@ -124,20 +122,11 @@ slice_stl_to_gcode = rule(
     },
 )
 
-def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, three_d = True):
-    solidpy_to_scad(
-        name = name + "_scad",
-        file = file,
-        out = name + ".scad",
-        bom_out = name + "_bom.txt",
-        deps = deps,
-        py_deps = py_deps,
-        resolution = scad_resolution,
-    )
+def scad_model(name, file, deps = [], three_d = True):
     if three_d:
         scad_render(
             name = name + "_stl",
-            file = name + ".scad",
+            file = file,
             out = name + ".stl",
             deps = deps,
         )
@@ -149,7 +138,24 @@ def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, th
     else:
         scad_render(
             name = name + "_svg",
-            file = name + ".scad",
+            file = file,
             out = name + ".svg",
             deps = deps,
         )
+
+def solidpy_model(name, file, deps = [], py_deps = [], scad_resolution = 100, three_d = True):
+    solidpy_to_scad(
+        name = name + "_scad",
+        file = file,
+        out = name + ".scad",
+        bom_out = name + "_bom.txt",
+        deps = deps,
+        py_deps = py_deps,
+        resolution = scad_resolution,
+    )
+    scad_model(
+        name = name,
+        file = name + ".scad",
+        deps = deps,
+        three_d = three_d,
+    )

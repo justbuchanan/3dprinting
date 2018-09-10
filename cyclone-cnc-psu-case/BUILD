@@ -1,7 +1,6 @@
-load("//tools:tools.bzl", "scad_render")
+load("//tools:tools.bzl", "scad_model")
 
-scad_render(
+scad_model(
     name = "case_stl",
-    out = "case.stl",
     file = "case.scad",
 )
