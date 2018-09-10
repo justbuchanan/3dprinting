@@ -1,6 +1,6 @@
 load("//tools:tools.bzl", "scad_model")
 
 scad_model(
-    name = "case_stl",
+    name = "case",
     file = "case.scad",
 )
