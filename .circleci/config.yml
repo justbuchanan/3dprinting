@@ -18,6 +18,8 @@ jobs:
 
       - checkout
 
+      - run: bazel query //...
+
       - run: echo "export SCAD_MODELS=\"$(bazel query 'filter(.*_scad,...)')\"" >> $BASH_ENV
       - run: echo $SCAD_MODELS
       - run: bazel build $SCAD_MODELS
