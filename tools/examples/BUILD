@@ -1,4 +1,4 @@
-load("//tools:tools.bzl", "scad_part")
+load("//tools:openscad.bzl", "scad_part")
 
 scad_part(
     name = "part1",

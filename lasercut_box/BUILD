@@ -1,4 +1,4 @@
-load("//tools:tools.bzl", "solidpy_model")
+load("//tools:solidpy.bzl", "solidpy_model")
 
 solidpy_model(
     name = "box",

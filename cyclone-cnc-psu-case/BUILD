@@ -1,4 +1,4 @@
-load("//tools:tools.bzl", "scad_model")
+load("//tools:openscad.bzl", "scad_model")
 
 scad_model(
     name = "case",
