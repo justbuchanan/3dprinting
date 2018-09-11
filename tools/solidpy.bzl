@@ -20,7 +20,7 @@ solidpy_to_scad = rule(
         "file": attr.label(allow_files = True, mandatory = True, single_file = True),
         "out": attr.output(mandatory = True),
         "bom_out": attr.output(mandatory = False),
-        "_render_tool": attr.label(cfg = "host", executable = True, allow_files = True, default = Label("//tools:render")),
+        "_render_tool": attr.label(cfg = "host", executable = True, allow_files = True, default = Label("//tools:solidpy2scad")),
         "deps": attr.label_list(allow_files = True),
         "py_deps": attr.label_list(allow_files = True),
         "resolution": attr.int(default = 200),

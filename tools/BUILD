@@ -11,8 +11,8 @@ py_library(
 )
 
 py_binary(
-    name = "render",
-    srcs = ["render.py"],
+    name = "solidpy2scad",
+    srcs = ["solidpy2scad.py"],
     default_python_version = "PY3",
     srcs_version = "PY3ONLY",
     visibility = ["//visibility:public"],
