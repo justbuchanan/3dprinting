@@ -60,7 +60,7 @@ def scad_model(name, file, deps = [], three_d = True):
 # does, this accepts a "toplevel" argument that lets you define what to render
 # as a snippet of scad code that's evaluated within the context of the file.
 def scad_part(name, file, toplevel, deps = [], three_d = True):
-    tmpfile = name + ".scad"
+    tmpfile = name + "_part.scad"
     part_scad_file(name = name + "_scad", file = file, output = tmpfile, toplevel = toplevel)
     scad_model(
         name = name,
