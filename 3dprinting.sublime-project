@@ -4,12 +4,9 @@
         {
             "path": ".",
             "folder_exclude_patterns": [
-                "__pycache__",
-                "bazel-*"
-            ],
-            "file_exclude_patterns": [
-                ".*"
+                "bazel-*",
             ]
         }
     ]
 }
+
