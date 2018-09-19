@@ -24,12 +24,6 @@ py_binary(
 )
 
 sh_binary(
-    name = "openscad",
-    srcs = ["openscad.sh"],
-    visibility = ["//visibility:public"],
-)
-
-sh_binary(
     name = "CuraEngine",
     srcs = ["CuraEngine.sh"],
     visibility = ["//visibility:public"],

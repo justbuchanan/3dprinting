@@ -17,11 +17,17 @@ part_scad_file = rule(
 )
 
 def _scad_render(ctx):
-    ctx.actions.run(
-        inputs = ctx.files.file + ctx.files.deps,
+    ctx.actions.run_shell(
+        inputs = ctx.files.file + ctx.files.deps + [ctx.executable._openscad_tool],
         outputs = [ctx.outputs.out],
-        arguments = ["-o", ctx.outputs.out.path, ctx.file.file.path],
-        executable = ctx.executable._openscad_tool,
+        command = """
+            export OPENSCADPATH="$(pwd):$OPENSCADPATH" &&
+            {openscad} $(pwd)/{infile} -o $(pwd)/{outfile}
+        """.format(
+            openscad = ctx.executable._openscad_tool.path,
+            infile = ctx.file.file.path,
+            outfile = ctx.outputs.out.path,
+        ),
         mnemonic = "OpenSCADRender",
     )
 
@@ -30,7 +36,7 @@ scad_render = rule(
     attrs = {
         "file": attr.label(allow_files = True, mandatory = True, single_file = True),
         "out": attr.output(mandatory = True),
-        "_openscad_tool": attr.label(cfg = "host", executable = True, allow_files = True, default = Label("//tools:openscad")),
+        "_openscad_tool": attr.label(cfg = "host", executable = True, allow_files = True, default = Label("@openscad//file")),
         "deps": attr.label_list(allow_files = True),
     },
 )

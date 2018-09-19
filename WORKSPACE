@@ -44,3 +44,10 @@ pip_import(
 load("@py_deps//:requirements.bzl", "pip_install")
 
 pip_install()
+
+http_file(
+    name = "openscad",
+    executable = True,
+    sha256 = "7d5d9ccaae357a5e96d68e84aec496978d1badf26102b2d0c8682f582ed4680d",
+    url = "https://download.opensuse.org/repositories/home:/t-paul/AppImage/OpenSCAD-Release-latest-x86_64.AppImage",
+)
