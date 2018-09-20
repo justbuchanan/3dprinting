@@ -10,7 +10,7 @@ jobs:
       - run: mkdir /tmp/artifacts
       - run: echo 'export CIRCLE_ARTIFACTS=/tmp/artifacts' >> $BASH_ENV
 
-      - run: pacman -Sy --noconfirm bazel clang python python-pip git go openssh
+      - run: pacman -Sy --noconfirm bazel clang python python-pip git go openssh fuse
       - run: go get -u github.com/justbuchanan/ci-status
 
       # TODO: bazel should handle this
