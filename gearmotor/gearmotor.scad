@@ -1,11 +1,10 @@
 use <MCAD/2Dshapes.scad>
-use <threads_v2p1.scad>
 
 // https://www.aliexpress.com/store/product/Sindax-GA12-N20-DC-12V-600RPM-High-Torque-Speed-Reduce-Intelligent-Car-Gear-Motor/1199185_32696998510.html?aff_platform=aaf&cpt=1509418787723&sk=zj6qB6AIM&aff_trace_key=814e57ab4b524eab8a8e8b0936be09d4-1509418787723-06666-zj6qB6AIM&terminal_id=7a1122be3d3b4810b1263b08ac79819b
 // https://www.walmart.com/ip/DC-6V-30RPM-3mm-Shaft-Diameter-Mini-Metal-Gear-Motor-with-Gearwheel-Model-N20/45586408
 // http://www.sears.com/uxcell-dc-6v-30rpm-3mm-shaft-mini-metal/p-SPM8859079629
 
-// "infintesimal" (sp?) increment
+// "infintesimal" increment
 inc=0.0001;
 
 motor_edge_outset=5;
@@ -255,9 +254,3 @@ module screw() {
         // ScrewThread(outer_diam, height, pitch=0, tooth_angle=30, tolerance=0.4, tip_height=0, tooth_height=0, tip_min_fract=0) {
     }
 }
-
-
-$fn=100;
-// gearmotor();
-// motor();
-// gearbox();
