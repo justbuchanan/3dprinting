@@ -13,14 +13,18 @@ py_library(
 py_binary(
     name = "solidpy2scad",
     srcs = ["solidpy2scad.py"],
-    default_python_version = "PY3",
-    srcs_version = "PY3ONLY",
     visibility = ["//visibility:public"],
     deps = [
         ":util_py",
         requirement("solidpython"),
         requirement("numpy"),
     ],
+)
+
+py_binary(
+    name = "cq_render",
+    srcs = ["cq_render.py"],
+    visibility = ["//visibility:public"],
 )
 
 sh_binary(
@@ -33,4 +37,10 @@ sh_binary(
     name = "CuraEngine",
     srcs = ["CuraEngine.sh"],
     visibility = ["//visibility:public"],
+)
+
+py_runtime(
+    name = "python-2-or-3",
+    files = [],
+    interpreter = "python-2-or-3.sh",
 )

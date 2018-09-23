@@ -1,2 +1,1 @@
-build --host_force_python=py3
-#build --python_path=/usr/bin/python3
+build --python_top=//tools:python-2-or-3
