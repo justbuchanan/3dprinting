@@ -342,7 +342,7 @@ class Thing(part, Connectable):
                  collect_subconnectors=False):
         part.__init__(self)
         Connectable.__init__(self)
-        self.typename = typename
+        self.typename = typename or self.__class__.__name__
         self.tag = tag
         self.is_atomic = is_atomic
         self._collect_subconnectors = collect_subconnectors
