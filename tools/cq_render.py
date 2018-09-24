@@ -23,6 +23,7 @@ with open(fname, 'r') as f:
     build_result = cqgi.parse(f.read()).build()
 
 print("Build results: %s" % str(build_result.results))
+assert len(build_result.results) > 0, "No build results"
 
 for res in build_result.results:
     asm = res.shape

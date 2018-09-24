@@ -60,7 +60,7 @@ jobs:
 
       - run: bazel query //...
       - run: bazel build //cq_example:block_stl
-      # - run: bazel build //cq_example:car_gltf
+      - run: bazel build //cq_example:car_gltf
 
       - store_artifacts:
           path: /tmp/artifacts
