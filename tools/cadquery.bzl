@@ -9,8 +9,8 @@ def _cq_render(ctx):
         #     cmd=ctx.executable._cadquery_tool.path,
         #     file=ctx.file.file.path,
         #     out=ctx.outputs.out.path),
-        executable=ctx.executable._cadquery_tool,
-        arguments=["--file", ctx.file.file.path, "--outfile", ctx.outputs.out.path],
+        executable = ctx.executable._cadquery_tool,
+        arguments = ["--file", ctx.file.file.path, "--outfile", ctx.outputs.out.path],
         mnemonic = "CadQueryRender",
     )
 

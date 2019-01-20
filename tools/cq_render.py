@@ -35,6 +35,5 @@ for res in build_result.results:
     if len(ext) > 0:
         outtype = ext[1:]
 
-
     print("Writing '%s' object to '%s'" % (clsname, outfile))
     asm.exporter(outtype)(outfile)
