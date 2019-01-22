@@ -1,3 +1,5 @@
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
 new_git_repository(
     name = "scad_utils",
     build_file_content = """
