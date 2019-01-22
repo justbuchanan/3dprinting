@@ -4,6 +4,10 @@ import numpy as np
 import math
 from solid.utils import *
 from functools import reduce
+from solid.utils import *
+from tools.util import *
+
+INC = 0.001
 
 in2mm = 25.4
 
@@ -12,9 +16,6 @@ fn = 100
 w = 78.7
 h = 58.7
 r = 15
-
-# def simple():
-#     return square([78.7, 58.7])
 
 def wavy_piece():
     amp = 1
@@ -28,7 +29,7 @@ def circ():
     return [(r*cos(t), r*sin(t)) for t in np.linspace(0, 2*pi, num=fn)]
 
 
-model = import_stl("downspout-endcap/2x3_End_Cap.stl")
+# model = import_stl("downspout-endcap/2x3_End_Cap.stl")
 
 
 def rrect(w, h, r):
@@ -39,27 +40,6 @@ def rrect(w, h, r):
         *[translate([x, y])(circle(r)) for x in [r, w-r] for y in [r, h-r]],
     )
 
-model += rrect(w, h, r)
-
-
-# def endcap_profile():
-
-
-# items: list of (name, scadobj) tuples
-def item_grid(items, spacing=100):
-    grid_sz = math.ceil(math.sqrt(len(items)))
-    part_grid = union()
-
-    for i in range(len(items)):
-        name = items[i][0]
-        obj = items[i][1]
-        x = i % grid_sz
-        y = floor(i / grid_sz)
-        txt = translate([0, -30, 0])(text(name))
-        part_grid += translate([x * spacing, y * spacing, 0])(obj, txt)
-    d = (grid_sz - 1) * spacing / 2
-    return translate([-d, -d, 0])(part_grid)
-
 # thickness of vinyl downspout walls
 downspout_th = 2
 def downspout_profile():
@@ -69,42 +49,115 @@ def downspout_profile():
     return p
 
 
-def endcap():
-    # w, h, r dimensions are for the *outside* of the tube.
-    # inner width = w - 2*th.
-    wall_th = 1
+class Endcap(Part):
+    def __init__(self):
+        super().__init__()
+        # w, h, r dimensions are for the *outside* of the tube.
+        # inner width = w - 2*th.
+        wall_th = 1
 
-    back_th = 2
-    total_h = 10
+        back_th = 2
+        total_h = 10
 
-    base = translate([-wall_th, -wall_th])(
-            rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
-    base = linear_extrude(total_h)(base)
+        base = translate([-wall_th, -wall_th])(
+                rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
+        base = linear_extrude(total_h)(base)
 
-    # hollow out large middle portion
-    dth = downspout_th + wall_th
-    base -= translate([dth,dth,back_th])(
-                linear_extrude(total_h)(
-                    rrect(w-dth*2, h-dth*2,r-dth)))
+        # hollow out large middle portion
+        dth = downspout_th + wall_th
+        base -= translate([dth,dth,back_th])(
+                    linear_extrude(total_h)(
+                        rrect(w-dth*2, h-dth*2,r-dth)))
 
-    # cut out profile for downspout
-    base -= translate([0,0,back_th])(
-                linear_extrude(total_h)(
+        # cut out profile for downspout
+        base -= translate([0,0,back_th])(
+                    linear_extrude(total_h)(
+                        downspout_profile()))
+
+        self.add(base)
+        self.con['main'] = Connector([w/2, h/2, 0], [0,0,1])
+
+
+class EndcapConnector(Part):
+    # TODO: share with endcap()
+    # thickness of connector wall
+    def __init__(self):
+        super().__init__(collect_subconnectors=False)
+        wall_th = 1
+
+        # distance between the two downspouts
+        downspout_spacing = 10
+
+        endcap_th = 2
+
+        # add two endcaps
+        dx = w + downspout_spacing -wall_th*2
+        conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
+                Endcap() + translate([dx, 0])(Endcap()))
+
+        # water hole cut out of each endcap that connects to channel
+        hole_r = 10
+
+        # distance from back of wall to start of water hole/channel
+        chan_wall_th = 3
+        chan_w = 4
+        chan_h = hole_r*2
+
+        # thickness of main backing body
+        backing_th = chan_wall_th*2 + chan_w # TODO calculate from chan_wall_th
+        conn += translate([-wall_th, -wall_th, -backing_th])(
+                    linear_extrude(backing_th)(
+                        rrect(w+dx+wall_th*2, h+wall_th*2, r+wall_th)))
+
+        # water channel holes in back of endcaps
+        for x in [w/2+wall_th, w/2+wall_th + dx]:
+            conn -= translate([x, h/2+wall_th, -backing_th+chan_wall_th])(
+                        cylinder(r=hole_r, h=100))
+
+        # horizontal channel connecting two water holes
+        conn -= translate([w/2+wall_th, h/2+wall_th-chan_h/2, -chan_wall_th])(
+                rotate([0, 90, 0])(
+                    linear_extrude(dx)(
+                        square([chan_w, chan_h]))))
+
+        self.add(conn)
+        self.con['left'] = Connector([w/2, h/2, 0], [0,0,1])
+        self.con['right'] = Connector([w/2 + dx, h/2, 0], [0,0,1])
+
+
+class Downspout(Part):
+    def __init__(self, l=35*in2mm):
+        super().__init__()
+        d = color("white")(
+                linear_extrude(l)(
                     downspout_profile()))
+        self.add(d)
 
-    return base
+        self.con['back'] = Connector([w/2, h/2, 0], [0,0,1])
+        self.con['front'] = Connector([w/2, h/2, l], [0,0,-1])
 
+def shelf_plumbing():
+    c = EndcapConnector()
 
-def downspout(l=35*in2mm):
-    return color("white")(linear_extrude(l)(downspout_profile()))
+    d = Downspout()
+    asm = c + attach(c.con['right'], d.con['front'])(d)
+
+# def attach(con1, con2, gap=0):
+
+    return asm
+
 
 model = item_grid([
     ("downspout profile", downspout_profile()),
-    ("endcap", endcap()),
+    ("endcap", Endcap()),
+    ("endcap 180", EndcapConnector()),
+    ("shelf", shelf_plumbing()),
     ("downspout", rotate([180,0,0])(
-                    downspout())),
+                    Downspout())),
     ("sin wave", wavy_piece()),
-], spacing=150)
+], spacing=200)
+
+# model = EndcapConnector()
 
 
 if __name__ == '__main__':
