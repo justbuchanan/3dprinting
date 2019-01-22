@@ -5,6 +5,8 @@ import math
 from solid.utils import *
 from functools import reduce
 
+in2mm = 25.4
+
 fn = 100
 
 w = 78.7
@@ -16,7 +18,7 @@ r = 15
 
 def wavy_piece():
     amp = 1
-    wave = [(t, amp*sin(t)) for t in np.linspace(0, 4*pi, num=50)]
+    wave = [(t, amp*sin(t)) for t in np.linspace(0, 8*pi, num=50)]
     # print(wave[0], wave[-1])
     h = 5
     model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
@@ -58,24 +60,50 @@ def item_grid(items, spacing=100):
     d = (grid_sz - 1) * spacing / 2
     return translate([-d, -d, 0])(part_grid)
 
-
+# thickness of vinyl downspout walls
+downspout_th = 2
 def downspout_profile():
-    th = 2 # thickness of vinyl downspout
+    th = downspout_th
     p = rrect(w, h, r) \
-          - translate([th,th])(rrect(w-2*th, h-2*th, r-2*th))
-    return color("white")(p)
+          - translate([th,th])(rrect(w-2*th, h-2*th, r-th))
+    return p
 
 
 def endcap():
     # w, h, r dimensions are for the *outside* of the tube.
     # inner width = w - 2*th.
     wall_th = 1
-    return downspout_profile()
 
+    back_th = 2
+    total_h = 10
+
+    base = translate([-wall_th, -wall_th])(
+            rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
+    base = linear_extrude(total_h)(base)
+
+    # hollow out large middle portion
+    dth = downspout_th + wall_th
+    base -= translate([dth,dth,back_th])(
+                linear_extrude(total_h)(
+                    rrect(w-dth*2, h-dth*2,r-dth)))
+
+    # cut out profile for downspout
+    base -= translate([0,0,back_th])(
+                linear_extrude(total_h)(
+                    downspout_profile()))
+
+    return base
+
+
+def downspout(l=35*in2mm):
+    return color("white")(linear_extrude(l)(downspout_profile()))
 
 model = item_grid([
     ("downspout profile", downspout_profile()),
     ("endcap", endcap()),
+    ("downspout", rotate([180,0,0])(
+                    downspout())),
+    ("sin wave", wavy_piece()),
 ], spacing=150)
 
 
