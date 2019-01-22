@@ -26,7 +26,7 @@ filegroup(
 
 git_repository(
     name = "io_bazel_rules_python",
-    commit = "44711d8ef543f6232aec8445fb5adce9a04767f9",
+    commit = "ebd7adcbcafcc8abe3fd8e5b0e42e10ced1bfe27",
     remote = "https://github.com/bazelbuild/rules_python.git",
 )
 
