@@ -25,11 +25,21 @@ def wavy_piece():
     model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
     return model
 
-def circ():
-    return [(r*cos(t), r*sin(t)) for t in np.linspace(0, 2*pi, num=fn)]
+# def circ():
+#     return [(r*cos(t), r*sin(t)) for t in np.linspace(0, 2*pi, num=fn)]
 
+def hatch(sz=[100,100], r=2, th=1):
+    h = square(sz)
+    dx = r*2*.866 + th
+    dy = r*2*0.75 + th
 
-# model = import_stl("downspout-endcap/2x3_End_Cap.stl")
+    for i in range(ceil(sz[0]/r)):
+        for j in range(ceil(sz[1]/r)):
+            xs = r if (j % 2 == 0) else 0
+            h -= translate([i*dx+xs, j*dy])(
+                rotate(30)(circle(r=r, segments=6)))
+    return h
+
 
 
 def rrect(w, h, r):
@@ -75,18 +85,19 @@ class Endcap(Part):
                         downspout_profile()))
 
         self.add(base)
-        self.con['main'] = Connector([w/2, h/2, 0], [0,0,1])
+        self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])  # /////////////////////////////////
 
 
-class EndcapConnector(Part):
+class Endcap180Connector(Part):
     # TODO: share with endcap()
     # thickness of connector wall
     def __init__(self):
         super().__init__(collect_subconnectors=False)
+
         wall_th = 1
 
         # distance between the two downspouts
-        downspout_spacing = 10
+        downspout_spacing = 15
 
         endcap_th = 2
 
@@ -120,45 +131,76 @@ class EndcapConnector(Part):
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
 
-        self.add(conn)
-        self.con['left'] = Connector([w/2, h/2, 0], [0,0,1])
-        self.con['right'] = Connector([w/2 + dx, h/2, 0], [0,0,1])
+        # # add cross-hatch filter/screen to entry holes
+        # conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
+        #         Endcap() + translate([dx, 0])(Endcap()))
+        for x in [0, dx]:
+            conn += translate([w/2+wall_th - hole_r + x, h/2+wall_th-hole_r, -1])(
+                linear_extrude(1)(
+                    hatch(sz=[hole_r*2+2, hole_r*2+2])))
+
+        self.add(color("gray")(conn))
+        self.con['left'] = Connector([w/2, h/2, 0.001], [.001,.001,1])
+        self.con['right'] = Connector([w/2 + dx, h/2, 0], [0.001,.001,1])
 
 
 class Downspout(Part):
-    def __init__(self, l=35*in2mm):
+    def __init__(self, l=35*in2mm, has_holes=True, hole_spacing=20, hole_r=1*in2mm):
         super().__init__()
         d = color("white")(
                 linear_extrude(l)(
                     downspout_profile()))
-        self.add(d)
 
-        self.con['back'] = Connector([w/2, h/2, 0], [0,0,1])
-        self.con['front'] = Connector([w/2, h/2, l], [0,0,-1])
+        if has_holes:
+            n = math.floor((l - hole_spacing) / (hole_spacing + hole_r*2))
+            sp = (l - 2*n*hole_r) / (n + 1)
+            # print("n = %d" % n)
+            for i in range(n):
+                d -= rotate([0,0,0])(rotate([-90, 0, 0])(
+                        translate([w/2, -(sp + hole_r + i*(sp+hole_r*2)), h/2])(
+                            cylinder(r=hole_r, h=100))))
+
+
+        self.add(color("white")(render()(d)))
+
+        self.con['back'] = Connector([w/2, h/2, 0], [0.001,0.001,1])
+        self.con['front'] = Connector([w/2, h/2, l], [0.001,0.001,-1]) #/////////////////////////////////
 
 def shelf_plumbing():
-    c = EndcapConnector()
+    c = Endcap180Connector()
+    d1 = Downspout()
+    d2 = Downspout()
 
-    d = Downspout()
-    asm = c + attach(c.con['right'], d.con['front'])(d)
+    asm = c
+    asm += attach(c.con['right'], d1.con['back'])(d1)
+    asm += attach(c.con['left'], d2.con['back'])(d2)
 
-# def attach(con1, con2, gap=0):
+    c2 = Endcap180Connector()
+    asm += attach(d1.con['front'], c2.con['left'])(c2)
 
+    # d3 = Downspout()
+    # asm += attach(c2.con['right'], d3.con['front'])(d3)
+
+    # asm = cube()
     return asm
 
 
+def with_conn(x):
+    return x + x.draw_connectors()
+
 model = item_grid([
-    ("downspout profile", downspout_profile()),
-    ("endcap", Endcap()),
-    ("endcap 180", EndcapConnector()),
-    ("shelf", shelf_plumbing()),
+    # ("downspout profile", downspout_profile()),
+    ("endcap", with_conn(Endcap())),
+    ("hatch", hatch()),
+    ("endcap 180", Endcap180Connector()),
     ("downspout", rotate([180,0,0])(
-                    Downspout())),
-    ("sin wave", wavy_piece()),
+                    with_conn(Downspout()))),
+    # ("sin wave", wavy_piece()),
 ], spacing=200)
 
-# model = EndcapConnector()
+# model += translate([600, 500, 0])(rotate([90,0,0])(shelf_plumbing()))
 
+# model = Downspout()
 
 if __name__ == '__main__':
     # write scad

@@ -390,7 +390,6 @@ class Thing(part, Connectable):
 
         return self.typename == other.typename
 
-    # TODO: traverse child elements and find Parts that exist under normal scad parts
     def add(self, child):
         OpenSCADObject.add(self, child)
 
