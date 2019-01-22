@@ -141,12 +141,12 @@ class Endcap180Connector(Part):
                         square([chan_w, chan_h]))))
 
         # # add cross-hatch filter/screen to entry holes
-        # conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
-        #         Endcap() + translate([dx, 0])(Endcap()))
+        screen_th=2
         for x in [0, dx]:
-            conn += translate([w/2+wall_th - hole_r + x, h/2+wall_th-hole_r, -1])(
-                linear_extrude(1)(
-                    hatch(sz=[hole_r*2+2, hole_r*2+2])))
+            conn += translate([w/2+wall_th - hole_r*1.5 + x, h/2+wall_th-hole_r*1.5, -screen_th])(
+                        linear_extrude(screen_th)(
+                            hatch(sz=[hole_r*3, hole_r*3], r=2, th=1.2)))
+
 
         self.add(color("gray")(conn))
         self.con['left'] = Connector([w/2, h/2, 0.001], [.001,.001,1])
@@ -255,7 +255,7 @@ def hatchring():
     h = intersection()(h, circle(r))
     return h
 
-model = hatchring()
+model = Endcap180Connector()
 
 if __name__ == '__main__':
     # write scad
