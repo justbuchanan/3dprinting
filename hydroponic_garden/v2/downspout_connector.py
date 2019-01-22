@@ -241,7 +241,21 @@ model = item_grid([
 
 # model += translate([600, 500, 0])(rotate([90,0,0])(shelf_plumbing()))
 
-# model = Downspout()
+def hatchring():
+    r = 10
+    hex_th=0.5
+    circ_th=1
+
+    # hatch
+    h = translate([-r*2, -r*2])(
+            hatch(sz=[50, 50], r=1, th=hex_th))
+    # boundary circle
+    h += circle(r=r) - circle(r=r-circ_th)
+    # trim off everything outside the circle
+    h = intersection()(h, circle(r))
+    return h
+
+model = hatchring()
 
 if __name__ == '__main__':
     # write scad
