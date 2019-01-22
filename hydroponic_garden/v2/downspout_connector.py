@@ -17,6 +17,11 @@ w = 78.7
 h = 58.7
 r = 15
 
+# shelf dimensions
+shelf_width = 33*in2mm
+shelf_depth = 13.5*in2mm
+
+
 def wavy_piece():
     amp = 1
     wave = [(t, amp*sin(t)) for t in np.linspace(0, 8*pi, num=50)]
@@ -88,21 +93,25 @@ class Endcap(Part):
         self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])  # /////////////////////////////////
 
 
+downspout_spacing = (shelf_depth - 3*w)/2
+
 class Endcap180Connector(Part):
     # TODO: share with endcap()
     # thickness of connector wall
-    def __init__(self):
+    def __init__(self, downspout_spacing=downspout_spacing):
+        """
+        Args:
+          downspout_spacing: distance between the two downspouts
+        """
         super().__init__(collect_subconnectors=False)
 
         wall_th = 1
 
-        # distance between the two downspouts
-        downspout_spacing = 15
-
         endcap_th = 2
 
         # add two endcaps
-        dx = w + downspout_spacing -wall_th*2
+        dx = w + downspout_spacing - wall_th*2
+        self.dx = dx
         conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
                 Endcap() + translate([dx, 0])(Endcap()))
 
@@ -144,8 +153,10 @@ class Endcap180Connector(Part):
         self.con['right'] = Connector([w/2 + dx, h/2, 0], [0.001,.001,1])
 
 
+downspout_chunk_len = shelf_width - 2*in2mm
+
 class Downspout(Part):
-    def __init__(self, l=35*in2mm, has_holes=True, hole_spacing=20, hole_r=1*in2mm):
+    def __init__(self, l=downspout_chunk_len, has_holes=True, hole_spacing=20, hole_r=1*in2mm):
         super().__init__()
         d = color("white")(
                 linear_extrude(l)(
@@ -184,19 +195,49 @@ def shelf_plumbing():
     # asm = cube()
     return asm
 
+class Endcap2(Part):
+    def __init__(self):
+        super().__init__()
+
+        x = Endcap()
+
+        wall_th = 1
+
+        z = 10
+        x += translate([-wall_th,-wall_th,-z])(linear_extrude(10)(
+                rrect(w+wall_th*2, h+wall_th*2, r+wall_th)))
+
+        hole_r = 10
+        x -= translate([w/2, h/2, -5])(
+            cylinder(r=hole_r, h=100))
+
+        # x = render()(x)
+
+        self.add(x)
+
+
+def shelf_sxs():
+    ec = Endcap180Connector()
+    asm = ec
+    asm += translate([ec.dx*2, 0, 0])(Endcap2())
+    return asm
+
 
 def with_conn(x):
     return x + x.draw_connectors()
 
+
 model = item_grid([
     # ("downspout profile", downspout_profile()),
     ("endcap", with_conn(Endcap())),
-    ("hatch", hatch()),
+    ("endcap2", with_conn(Endcap2())),
+    # ("hatch", hatch()),
     ("endcap 180", Endcap180Connector()),
+    ("shelf sxs", shelf_sxs()),
     ("downspout", rotate([180,0,0])(
                     with_conn(Downspout()))),
     # ("sin wave", wavy_piece()),
-], spacing=200)
+], spacing=400)
 
 # model += translate([600, 500, 0])(rotate([90,0,0])(shelf_plumbing()))
 
