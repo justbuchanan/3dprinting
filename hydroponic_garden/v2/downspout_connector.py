@@ -74,8 +74,8 @@ def endcap():
     # inner width = w - 2*th.
     wall_th = 1
 
-    back_th = 1
-    total_h = 4
+    back_th = 2
+    total_h = 10
 
     base = translate([-wall_th, -wall_th])(
             rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
@@ -105,8 +105,6 @@ model = item_grid([
                     downspout())),
     ("sin wave", wavy_piece()),
 ], spacing=150)
-
-model = endcap()
 
 
 if __name__ == '__main__':
