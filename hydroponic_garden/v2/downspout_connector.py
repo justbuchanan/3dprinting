@@ -30,9 +30,8 @@ def wavy_piece():
     model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
     return model
 
-# def circ():
-#     return [(r*cos(t), r*sin(t)) for t in np.linspace(0, 2*pi, num=fn)]
 
+# hexagonal hole pattern
 def hatch(sz=[100,100], r=2, th=1):
     h = square(sz)
     dx = r*2*.866 + th
@@ -140,7 +139,8 @@ class Endcap180Connector(Part):
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
 
-        # # add cross-hatch filter/screen to entry holes
+        # add cross-hatch filter/screen to entry holes
+        # TODO: make this a dome? this flat bridge currently doesn't print well
         screen_th=2
         for x in [0, dx]:
             conn += translate([w/2+wall_th - hole_r*1.5 + x, h/2+wall_th-hole_r*1.5, -screen_th])(
@@ -226,21 +226,7 @@ def shelf_sxs():
 def with_conn(x):
     return x + x.draw_connectors()
 
-
-model = item_grid([
-    # ("downspout profile", downspout_profile()),
-    ("endcap", with_conn(Endcap())),
-    ("endcap2", with_conn(Endcap2())),
-    # ("hatch", hatch()),
-    ("endcap 180", Endcap180Connector()),
-    ("shelf sxs", shelf_sxs()),
-    ("downspout", rotate([180,0,0])(
-                    with_conn(Downspout()))),
-    # ("sin wave", wavy_piece()),
-], spacing=400)
-
-# model += translate([600, 500, 0])(rotate([90,0,0])(shelf_plumbing()))
-
+# A circle with hexagonal holes.
 def hatchring():
     r = 10
     hex_th=0.5
@@ -257,8 +243,20 @@ def hatchring():
 
 
 if __name__ == '__main__':
+    model = item_grid([
+        # ("downspout profile", downspout_profile()),
+        ("endcap", with_conn(Endcap())),
+        ("endcap2", with_conn(Endcap2())),
+        # ("hatch", hatch()),
+        ("endcap 180", Endcap180Connector()),
+        ("shelf sxs", shelf_sxs()),
+        ("downspout", rotate([180,0,0])(
+                        with_conn(Downspout()))),
+        # ("sin wave", wavy_piece()),
+    ], spacing=400)
+
     model = Endcap180Connector()
-    
+
     # write scad
     fname = "out.scad"
     scad_render_to_file(model, fname, file_header='$fn=%d;' % fn)

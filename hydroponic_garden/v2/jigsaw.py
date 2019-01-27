@@ -16,31 +16,36 @@ r2 = r1 / 2
 n = 6
 dy = r1 * 3
 dx = r1 * 2
-joint_w = 7
+joint_w = 7 # center-to-center distance between big circle and small circle
 start_y = 2
 h += 5
+
+protrusion_len = r1/2 + r1 + joint_w
 
 # TODO: hole should be bigger than peg
 
 model = intersection()(
     # cut off everything outside this rect:
-    square([w + joint_w * 3, h]),
+    square([w + joint_w * 100, h]),
+
+    # Create positive pegs and cut out negatives
     difference()(
+        # positive pegs
         union()(
             square([w, h]),
             *[
                 translate([w, dy * i + start_y])(
                     hull()(
                         circle(r1),
-                        translate([joint_w, 0, 0])(
+                        translate([joint_w, 0])(
                             circle(r1))))
                 for i in range(n)
             ],
         ),
 
-        # cut out "pegs"
+        # cut out negative "pegs"
         union()(*[
-            translate([w, start_y + dy * (i - 1 / 2)])(
+            translate([w, start_y + dy * (i - 1/2)])(
                 hull()(
                     circle(r1),
                     translate([joint_w, 0])(
@@ -49,7 +54,10 @@ model = intersection()(
         ])))
 
 # TODO: middle of joint
-model += color("blue")(translate([w, 0, 0])(square([1, 200])))
+# visualize center of connectors
+model += color("blue")(
+            translate([w+protrusion_len/2, 0, 0])(
+                square([1, h])))
 
 if __name__ == '__main__':
     # write scad
