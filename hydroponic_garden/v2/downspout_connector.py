@@ -255,9 +255,10 @@ def hatchring():
     h = intersection()(h, circle(r))
     return h
 
-model = Endcap180Connector()
 
 if __name__ == '__main__':
+    model = Endcap180Connector()
+    
     # write scad
     fname = "out.scad"
     scad_render_to_file(model, fname, file_header='$fn=%d;' % fn)
