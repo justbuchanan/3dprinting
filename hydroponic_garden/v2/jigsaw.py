@@ -1,42 +1,38 @@
 from solid import *
 from math import sin, cos, pi
-import numpy as np
 import math
 from solid.utils import *
-from functools import reduce
-from solid.utils import *
-from tools.util import *
-
-fn = 100
-
-w = 100
-h = 30
+from downspout_connector import *
+# from solid.utils import *
+# from tools.util import *
 
 
-# model -= 
+r1 = 4
+r2 = r1/2
+n = 6
+dy = r1*3
+dx = r1*2
+joint_w = 7
+start_y = 2
+h += 5
+model = intersection()(
+    # cut off everything outside this rect:
+    square([w+joint_w*3, h]),
 
-# model = 
+    difference()(
+        union()(
+        square([w, h]),
+        *[translate([w, dy*i+start_y])(hull()(circle(r1), translate([joint_w, 0, 0])(circle(r1)))) for i in range(n)],
+        # *[translate([dx, dy*i + dy/2])(circle(r1)) for i in range(n)],
+        ),
 
-# model -= hull()(
-    # translate([w/2, h/2])(
-        # circle(r=4)))
+        # cut out "pegs"
+        union() (
+            *[translate([w, start_y+dy*(i - 1/2)])(hull()(circle(r1), translate([joint_w, 0])(circle(r2)))) for i in range(n)]
+        )
+    )
+    )
 
-left = union()
-right = union()
-
-for i in range(5):
-    x = w/2
-    x += 4* (1 if i % 2 == 0 else -1)
-
-    r = 4
-    xd = -1 if i % 2 == 0 else 1
-    pc = circle(r) + translate([xd*r*2, 0])(square([r*4, r], center=True))
-
-
-    left -= translate([x, i*10])(
-                pc)
-
-model = left + right
 
 if __name__ == '__main__':
     # write scad
