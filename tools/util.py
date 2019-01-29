@@ -469,7 +469,9 @@ def item_grid(items, spacing=100):
         obj = items[i][1]
         x = i % grid_sz
         y = floor(i / grid_sz)
-        txt = translate([0, -30, 0])(color("black")(text(name)))
+        txt = translate([0, -30, 0])(
+                color("black")(
+                    text(name)))
         part_grid += translate([x * spacing, y * spacing, 0])(obj, txt)
     d = (grid_sz - 1) * spacing / 2
     return translate([-d, -d, 0])(part_grid)
