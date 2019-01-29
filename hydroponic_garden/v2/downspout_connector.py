@@ -6,6 +6,7 @@ from solid.utils import *
 from functools import reduce
 from solid.utils import *
 from tools.util import *
+import jigsaw
 
 INC = 0.001
 
@@ -62,16 +63,16 @@ def downspout_profile():
           - translate([th,th])(rrect(w-2*th, h-2*th, r-th))
     return p
 
-
+DEFAULT_ENDCAP_BACK_TH = 2
+# DEFAULT_ENDCAP_TOTAL_H = 10
 class Endcap(Part):
-    def __init__(self):
+    def __init__(self, w=w, h=h, wall_th=1, back_th=DEFAULT_ENDCAP_BACK_TH):
         super().__init__()
         # w, h, r dimensions are for the *outside* of the tube.
         # inner width = w - 2*th.
-        wall_th = 1
 
-        back_th = 2
-        total_h = 10
+        wall_h = 8
+        total_h = wall_h + back_th
 
         base = translate([-wall_th, -wall_th])(
                 rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
@@ -89,12 +90,13 @@ class Endcap(Part):
                         downspout_profile()))
 
         self.add(base)
-        self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])  # /////////////////////////////////
+        self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])
 
         # export variables for inspection
         self.back_th = back_th
         self.total_h = total_h
-
+        self.h = h
+        self.w = w
 
 
 downspout_spacing = (shelf_depth - 3*w)/2
@@ -225,21 +227,19 @@ class EndcapWithPegs(Part):
         super().__init__()
 
         th = 5
-        e = translate([0,0,th-INC])(Endcap())
-
-        j = cube([100, 50, th])
+        e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
 
         JW = 3
-        import jigsaw
-        j -= translate([w-JW, -INC, -INC])(
-            render()(
-                linear_extrude(th*2)(
-                    jigsaw.jigsaw2(h+2*INC))))
+        j = translate([e.w/2, 0, 0])(
+                difference()(
+                    cube([100, e.h, th]),
+                    translate([w-JW, -INC, -INC])(
+                        linear_extrude(th*2)(
+                            jigsaw.jigsaw2(h+2*INC)))
+            ))
 
 
-        self.add(j)
-
-        self.add(e)
+        self.add(render()(union()(e, j)))
 
 
 def shelf_sxs():
