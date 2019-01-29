@@ -159,6 +159,9 @@ class Endcap180Connector(Part):
         self.con['left'] = Connector([w/2, h/2, 0.001], [.001,.001,1])
         self.con['right'] = Connector([w/2 + dx, h/2, 0], [0.001,.001,1])
 
+        # export variables
+        self.backing_th = backing_th
+
 
 downspout_chunk_len = shelf_width - 2*in2mm
 
@@ -226,7 +229,9 @@ class EndcapWithPegs(Part):
     def __init__(self):
         super().__init__()
 
-        th = 5
+        e180 = Endcap180Connector()
+
+        th = e180.backing_th
         e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
 
         JW = 3
@@ -238,6 +243,9 @@ class EndcapWithPegs(Part):
                             jigsaw.jigsaw2(h+2*INC)))
             ))
 
+        # TODO: integer number of pegs
+        # TODO: figure out JW
+        # TODO: figure out extension length
 
         self.add(render()(union()(e, j)))
 

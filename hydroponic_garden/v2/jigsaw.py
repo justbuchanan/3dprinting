@@ -22,7 +22,7 @@ def jigsaw(
     dx = r1 * 2
     n = 6
 
-# horizontal distance from end of negative peg to end of positive peg
+    # horizontal distance from end of negative peg to end of positive peg
     protrusion_len = r1/2 + r1 + joint_w
 
     return intersection()(
