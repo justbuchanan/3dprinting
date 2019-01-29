@@ -91,6 +91,11 @@ class Endcap(Part):
         self.add(base)
         self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])  # /////////////////////////////////
 
+        # export variables for inspection
+        self.back_th = back_th
+        self.total_h = total_h
+
+
 
 downspout_spacing = (shelf_depth - 3*w)/2
 
@@ -215,6 +220,27 @@ class Endcap2(Part):
 
         self.add(x)
 
+class EndcapWithPegs(Part):
+    def __init__(self):
+        super().__init__()
+
+        th = 5
+        e = translate([0,0,th-INC])(Endcap())
+
+        j = cube([100, 50, th])
+
+        JW = 3
+        import jigsaw
+        j -= translate([w-JW, -INC, -INC])(
+            render()(
+                linear_extrude(th*2)(
+                    jigsaw.jigsaw2(h+2*INC))))
+
+
+        self.add(j)
+
+        self.add(e)
+
 
 def shelf_sxs():
     ec = Endcap180Connector()
@@ -247,15 +273,16 @@ if __name__ == '__main__':
         # ("downspout profile", downspout_profile()),
         ("endcap", with_conn(Endcap())),
         ("endcap2", with_conn(Endcap2())),
+        ("with pegs", EndcapWithPegs()),
         # ("hatch", hatch()),
         ("endcap 180", Endcap180Connector()),
         ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(
                         with_conn(Downspout()))),
-        # ("sin wave", wavy_piece()),
     ], spacing=400)
 
-    model = Endcap180Connector()
+    # model = Endcap180Connector()
+    model = EndcapWithPegs()
 
     # write scad
     fname = "out.scad"
