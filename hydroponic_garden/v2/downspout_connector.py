@@ -95,7 +95,7 @@ class Endcap(Part):
         # export variables for inspection
         self.back_th = back_th
         self.total_h = total_h
-        self.h = h
+        self.h = h # TODO: not right
         self.w = w
 
 
@@ -225,6 +225,7 @@ class Endcap2(Part):
 
         self.add(x)
 
+
 class EndcapWithPegs(Part):
     def __init__(self):
         super().__init__()
@@ -234,17 +235,18 @@ class EndcapWithPegs(Part):
         th = e180.backing_th
         e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
 
-        JW = 3
+        jig = jigsaw.Jigsaw2(h+2*INC)
+
+        wwww = 100
+
         j = translate([e.w/2, 0, 0])(
                 difference()(
-                    cube([100, e.h, th]),
-                    translate([w-JW, -INC, -INC])(
+                    cube([wwww, e.h, th]),
+                    translate([wwww-jig.w, -INC, -INC])(
                         linear_extrude(th*2)(
-                            jigsaw.jigsaw2(h+2*INC)))
-            ))
+                            jig))))
 
         # TODO: integer number of pegs
-        # TODO: figure out JW
         # TODO: figure out extension length
 
         self.add(render()(union()(e, j)))
