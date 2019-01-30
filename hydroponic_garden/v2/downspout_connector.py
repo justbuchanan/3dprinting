@@ -294,11 +294,13 @@ def hatchring():
 #         [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
 #         )
 
-# def jigsaw_test_piece()
+def jigsaw_test_piece():
+    return render()(jigsaw_piece(30, 10, opp=True))
+
 
 if __name__ == '__main__':
     model = item_grid([
-        # ("downspout profile", downspout_profile()),
+        ("downspout profile", downspout_profile()),
         ("endcap", with_conn(Endcap())),
         ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),
@@ -307,10 +309,11 @@ if __name__ == '__main__':
         ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(
                         with_conn(Downspout()))),
+        ("jigsaw piee", jigsaw_test_piece()),
     ], spacing=400)
 
     # model = Endcap180Connector()
-    # model = render()(jigsaw_piece(30, 10, opp=True))
+    # model = jigsaw_test_piece()
 
     # write scad
     fname = "out.scad"
