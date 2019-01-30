@@ -100,7 +100,8 @@ class Endcap(Part):
         self.wall_th = wall_th
 
 
-downspout_spacing = (shelf_depth - 3*w)/2
+downspout_spacing = (shelf_depth - 3*w - 2*in2mm)/2
+print("downspout spacing: {}".format(downspout_spacing))
 
 class Endcap180Connector(Part):
     # TODO: share with endcap()
@@ -135,6 +136,11 @@ class Endcap180Connector(Part):
                     linear_extrude(backing_th)(
                         rrect(w+dx+wall_th*2, h+wall_th*2, r+wall_th)))
 
+        # add jigsaw connector
+        conn += translate([dx, 0, -backing_th])(
+            jigsaw_piece(dx=dx, th=backing_th, opp=True))
+
+
         # water channel holes in back of endcaps
         for x in [w/2+wall_th, w/2+wall_th + dx]:
             conn -= translate([x, h/2+wall_th, -backing_th+chan_wall_th])(
@@ -154,6 +160,8 @@ class Endcap180Connector(Part):
                         linear_extrude(screen_th)(
                             hatch(sz=[hole_r*3, hole_r*3], r=2, th=1.2)))
 
+
+        conn = render()(conn)
 
         self.add(color("gray")(conn))
         self.con['left'] = Connector([w/2, h/2, 0.001], [.001,.001,1])
@@ -226,32 +234,26 @@ class Endcap2(Part):
 
         self.add(x)
 
+def jigsaw_piece(dx, th, opp=False):
+    e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
+    jig = jigsaw.Jigsaw2(h+2*INC+2*e.wall_th, r1=6, opp=opp)
+    wwww = dx/2 + jig.w/2
+    return translate([e.w/2-e.wall_th, -e.wall_th, 0])(
+            difference()(
+                cube([wwww, e.h+2*e.wall_th, th]),
+                translate([wwww-jig.w, -INC, -INC])(
+                    linear_extrude(th*2)(
+                        jig))))
+
 
 class EndcapWithPegs(Part):
     def __init__(self):
         super().__init__()
 
         e180 = Endcap180Connector()
-
         th = e180.backing_th
         e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-
-        jig = jigsaw.Jigsaw2(h+2*INC+2*e.wall_th, r1=6, opp=False)
-
-        # TODO
-        wwww = e180.dx/2 - jig.w/2
-        print(e180.dx)
-
-        j = translate([e.w/2-e.wall_th, -e.wall_th, 0])(
-                difference()(
-                    cube([wwww, e.h+2*e.wall_th, th]),
-                    translate([wwww-jig.w, -INC, -INC])(
-                        linear_extrude(th*2)(
-                            jig))))
-
-        # TODO: integer number of pegs
-        # TODO: figure out extension length
-
+        j = jigsaw_piece(dx=e180.dx, th=e180.backing_th)
         self.add(render()(union()(e, j)))
 
 
