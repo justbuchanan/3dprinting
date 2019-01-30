@@ -152,13 +152,13 @@ class Endcap180Connector(Part):
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
 
-        # add cross-hatch filter/screen to entry holes
-        # TODO: make this a dome? this flat bridge currently doesn't print well
-        screen_th=2
-        for x in [0, dx]:
-            conn += translate([w/2+wall_th - hole_r*1.5 + x, h/2+wall_th-hole_r*1.5, -screen_th])(
-                        linear_extrude(screen_th)(
-                            hatch(sz=[hole_r*3, hole_r*3], r=2, th=1.2)))
+        # # add cross-hatch filter/screen to entry holes
+        # # TODO: make this a dome? this flat bridge currently doesn't print well
+        # screen_th=2
+        # for x in [0, dx]:
+        #     conn += translate([w/2+wall_th - hole_r*1.5 + x, h/2+wall_th-hole_r*1.5, -screen_th])(
+        #                 linear_extrude(screen_th)(
+        #                     hatch(sz=[hole_r*3, hole_r*3], r=2, th=1.2)))
 
 
         conn = render()(conn)
@@ -282,6 +282,12 @@ def hatchring():
     h = intersection()(h, circle(r))
     return h
 
+def ball():
+    return difference()(
+        sphere(r=10),
+        [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
+        )
+
 
 if __name__ == '__main__':
     model = item_grid([
@@ -298,6 +304,7 @@ if __name__ == '__main__':
 
     # model = Endcap180Connector()
     model = EndcapWithPegs() + translate([0, -70])(Endcap180Connector())
+    # model = ball()
 
     # write scad
     fname = "out.scad"
