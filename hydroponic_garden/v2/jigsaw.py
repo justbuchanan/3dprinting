@@ -64,26 +64,41 @@ class Jigsaw2(Part):
         # center-to-center distance between big circle and small circle
         joint_w = 7,
         # blue_line=True,
+        opp=True,
         ):
         super().__init__()
 
-        r2 = r1 / 2
+        # r2 = r1 / 2
         dy = r1 * 3
+        n = math.floor(h / dy)
+
+        dy = h / n
+        r1 = dy / 3
+        r2 = r1 / 2
+
         dx = r1 * 2
-        n = math.ceil(h / dy)
+
+        n += 1
+
+        start_y = -dy/2 if opp else 0
+
+
         m = union()(*[
-            translate([r1, dy * (i+1 - 1/2)])(
-                hull()(
-                    circle(r1),
-                    translate([joint_w, 0])(
-                        circle(r2))))
-            for i in range(n)
-        ])
-        m += translate([r1+joint_w, 0])(
+                translate([r1, start_y + dy * (i+ 1/2)])(
+                    hull()(
+                        circle(r1),
+                        translate([joint_w, 0])(
+                            circle(r2))))
+                for i in range(n)
+            ],
+
+            translate([r1+joint_w, 0])(
                 difference()(
                     square([20, h]),
-                    *[translate([0, i*dy])(circle(r1)) for i in range(n)],
-                ))
+                    *[translate([0, start_y+i*dy])(circle(r1)) for i in range(n)],
+                )
+            )
+        )
 
         # m += color("blue")(square([r1+r1+joint_w, 100]))
 
@@ -106,16 +121,16 @@ class Jigsaw2(Part):
 def part2():
     return square([20, h]) - Jigsaw2(h)
 
-h = 63.7
-model = item_grid([
-    ("part2", part2()),
-    # ("part2", part2()),
-    # ("jigsaw", jigsaw(h)),
-    ("jigsaw2", Jigsaw2(h)),
-], spacing=100)
-
 
 if __name__ == '__main__':
+    h = 63.7
+    model = item_grid([
+        ("part2", part2()),
+        # ("part2", part2()),
+        # ("jigsaw", jigsaw(h)),
+        ("jigsaw2", Jigsaw2(h)),
+    ], spacing=100)
+
     # write scad
     fn = 100
     fname = "out.scad"

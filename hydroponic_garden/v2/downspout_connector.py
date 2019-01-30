@@ -97,6 +97,7 @@ class Endcap(Part):
         self.total_h = total_h
         self.h = h # TODO: not right
         self.w = w
+        self.wall_th = wall_th
 
 
 downspout_spacing = (shelf_depth - 3*w)/2
@@ -117,7 +118,6 @@ class Endcap180Connector(Part):
 
         # add two endcaps
         dx = w + downspout_spacing - wall_th*2
-        self.dx = dx
         conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
                 Endcap() + translate([dx, 0])(Endcap()))
 
@@ -161,6 +161,7 @@ class Endcap180Connector(Part):
 
         # export variables
         self.backing_th = backing_th
+        self.dx = dx
 
 
 downspout_chunk_len = shelf_width - 2*in2mm
@@ -235,13 +236,15 @@ class EndcapWithPegs(Part):
         th = e180.backing_th
         e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
 
-        jig = jigsaw.Jigsaw2(h+2*INC)
+        jig = jigsaw.Jigsaw2(h+2*INC+2*e.wall_th, r1=6, opp=False)
 
-        wwww = 100
+        # TODO
+        wwww = e180.dx/2 - jig.w/2
+        print(e180.dx)
 
-        j = translate([e.w/2, 0, 0])(
+        j = translate([e.w/2-e.wall_th, -e.wall_th, 0])(
                 difference()(
-                    cube([wwww, e.h, th]),
+                    cube([wwww, e.h+2*e.wall_th, th]),
                     translate([wwww-jig.w, -INC, -INC])(
                         linear_extrude(th*2)(
                             jig))))
@@ -292,7 +295,7 @@ if __name__ == '__main__':
     ], spacing=400)
 
     # model = Endcap180Connector()
-    model = EndcapWithPegs()
+    model = EndcapWithPegs() + translate([0, -70])(Endcap180Connector())
 
     # write scad
     fname = "out.scad"
