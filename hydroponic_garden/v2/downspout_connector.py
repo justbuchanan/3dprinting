@@ -23,27 +23,27 @@ shelf_width = 33*in2mm
 shelf_depth = 13.5*in2mm
 
 
-def wavy_piece():
-    amp = 1
-    wave = [(t, amp*sin(t)) for t in np.linspace(0, 8*pi, num=50)]
-    # print(wave[0], wave[-1])
-    h = 5
-    model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
-    return model
+# def wavy_piece():
+#     amp = 1
+#     wave = [(t, amp*sin(t)) for t in np.linspace(0, 8*pi, num=50)]
+#     # print(wave[0], wave[-1])
+#     h = 5
+#     model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
+#     return model
 
 
-# hexagonal hole pattern
-def hatch(sz=[100,100], r=2, th=1):
-    h = square(sz)
-    dx = r*2*.866 + th
-    dy = r*2*0.75 + th
+# # hexagonal hole pattern
+# def hatch(sz=[100,100], r=2, th=1):
+#     h = square(sz)
+#     dx = r*2*.866 + th
+#     dy = r*2*0.75 + th
 
-    for i in range(ceil(sz[0]/r)):
-        for j in range(ceil(sz[1]/r)):
-            xs = r if (j % 2 == 0) else 0
-            h -= translate([i*dx+xs, j*dy])(
-                rotate(30)(circle(r=r, segments=6)))
-    return h
+#     for i in range(ceil(sz[0]/r)):
+#         for j in range(ceil(sz[1]/r)):
+#             xs = r if (j % 2 == 0) else 0
+#             h -= translate([i*dx+xs, j*dy])(
+#                 rotate(30)(circle(r=r, segments=6)))
+#     return h
 
 
 
@@ -101,29 +101,36 @@ class Endcap(Part):
 
 
 downspout_spacing = (shelf_depth - 3*w - 2*in2mm)/2
-print("downspout spacing: {}".format(downspout_spacing))
+# print("downspout spacing: {}".format(downspout_spacing))
 
 class Endcap180Connector(Part):
     # TODO: share with endcap()
     # thickness of connector wall
-    def __init__(self, downspout_spacing=downspout_spacing):
+    def __init__(self,
+        downspout_spacing=downspout_spacing,
+        wall_th = 1,
+        endcap_th = 2,
+        # water hole cut out of each endcap that connects to channel
+        hole_r = 10,
+        ):
         """
         Args:
           downspout_spacing: distance between the two downspouts
         """
         super().__init__(collect_subconnectors=False)
 
-        wall_th = 1
+        # TODO: clarify when wall_th is taken into account
 
-        endcap_th = 2
+        # TODO: shift to be around zero
+
+        # center-to-center distance between the two endcaps.
+        dx = w + downspout_spacing - wall_th*2
 
         # add two endcaps
-        dx = w + downspout_spacing - wall_th*2
-        conn = translate([0, 0, -endcap_th+INC])( # embed endcaps into backing
+        # INC makes a slight overlap to embed endcaps into backing
+        conn = translate([0, 0, -endcap_th+INC])(
                 Endcap() + translate([dx, 0])(Endcap()))
 
-        # water hole cut out of each endcap that connects to channel
-        hole_r = 10
 
         # distance from back of wall to start of water hole/channel
         chan_wall_th = 3
@@ -214,27 +221,26 @@ def shelf_plumbing():
     # asm = cube()
     return asm
 
-class Endcap2(Part):
-    def __init__(self):
+class EndcapWithHole(Part):
+    def __init__(self,
+        hole_r = 10,
+        wall_th = 1,
+        ):
         super().__init__()
 
-        x = Endcap()
-
-        wall_th = 1
+        e = Endcap()
 
         z = 10
-        x += translate([-wall_th,-wall_th,-z])(linear_extrude(10)(
+        e += translate([-wall_th,-wall_th,-z])(linear_extrude(10)(
                 rrect(w+wall_th*2, h+wall_th*2, r+wall_th)))
 
-        hole_r = 10
-        x -= translate([w/2, h/2, -5])(
+        e -= translate([w/2, h/2, -5])(
             cylinder(r=hole_r, h=100))
 
-        # x = render()(x)
-
-        self.add(x)
+        self.add(e)
 
 def jigsaw_piece(dx, th, opp=False):
+    # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
     jig = jigsaw.Jigsaw2(h+2*INC+2*e.wall_th, r1=6, opp=opp)
     wwww = dx/2 + jig.w/2
@@ -260,7 +266,7 @@ class EndcapWithPegs(Part):
 def shelf_sxs():
     ec = Endcap180Connector()
     asm = ec
-    asm += translate([ec.dx*2, 0, 0])(Endcap2())
+    asm += translate([ec.dx*2, 0, 0])(EndcapWithPegs())
     return asm
 
 
@@ -282,18 +288,19 @@ def hatchring():
     h = intersection()(h, circle(r))
     return h
 
-def ball():
-    return difference()(
-        sphere(r=10),
-        [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
-        )
+# def ball():
+#     return difference()(
+#         sphere(r=10),
+#         [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
+#         )
 
+# def jigsaw_test_piece()
 
 if __name__ == '__main__':
     model = item_grid([
         # ("downspout profile", downspout_profile()),
         ("endcap", with_conn(Endcap())),
-        ("endcap2", with_conn(Endcap2())),
+        ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),
         # ("hatch", hatch()),
         ("endcap 180", Endcap180Connector()),
@@ -303,8 +310,7 @@ if __name__ == '__main__':
     ], spacing=400)
 
     # model = Endcap180Connector()
-    model = EndcapWithPegs() + translate([0, -70])(Endcap180Connector())
-    # model = ball()
+    # model = render()(jigsaw_piece(30, 10, opp=True))
 
     # write scad
     fname = "out.scad"
