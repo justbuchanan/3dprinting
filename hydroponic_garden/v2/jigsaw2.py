@@ -1,4 +1,3 @@
-# from solid import circle, translate, cube
 import math
 from solid.utils import *
 from tools.util import item_grid, Part
@@ -7,19 +6,20 @@ import numpy as np
 INC = 0.001
 
 
-def sine_wave(w=20, amp = 1.5, dy=20):
+# tol: subtracted from the y on each side.
+def sine_peg(peg_w, dy, amp=1.5, opp=False, tol=0.05):
     endangle = 2*pi
-    t2w = w/endangle
+    t2w = peg_w/endangle
 
     # return cube(1)
     def wave(theta, dy):
         return (theta*t2w, -math.sin(theta)*amp+dy)
 
-    vspace = dy/2
+    vspace = dy/2 - tol*2
 
     npoint = 100
 
-    return translate([0, 0])(polygon([
+    return translate([0, tol])(polygon([
         *[
             wave(theta,dy=vspace)
             for theta in np.linspace(0, endangle, num=npoint)
@@ -30,24 +30,28 @@ def sine_wave(w=20, amp = 1.5, dy=20):
         ],
         ]))
 
-def sine_peg(peg_w, dy, opp=False):
-    return sine_wave(w=peg_w, dy=dy)
-
 def rect_peg(peg_w, dy, opp=False):
     return square([peg_w, dy/2])
 
 
-def jigsaw(h=100, peg_func=rect_peg, xgap=0.2):
-    n = 5
+def jigsaw(h=100, peg_func=rect_peg, xgap=0.2, opp=False):
+    n = 3
     dy = h / n
 
-    peg_w = 20
-    part_w = 1
+    n = 7
+
+    peg_w = 10
+    part_w = 3
     total_w = part_w + peg_w
 
     part = square([part_w, h])
 
-    pegs = union()([translate([part_w-INC,dy*i])(peg_func(peg_w,dy)) for i in range(n)])
+    dddyyy = 1/4 if opp else -1/4
+
+    pegs = union()([
+        translate([part_w-INC,dy*(i+dddyyy)])(
+            peg_func(peg_w,dy))
+        for i in range(n)])
     left = color("red")(
             part,
             pegs,
@@ -59,17 +63,24 @@ def jigsaw(h=100, peg_func=rect_peg, xgap=0.2):
                 pegs
                 )))
 
-    L = left - right
-    R = right - left
+    L = left #- right
+    R = right #- left
 
-    return L + translate([xgap,0])(R)
+    # TODO: intersect with bounding rect
+    return color("red")(intersection()(
+        L,
+        square([total_w, h]),
+        ))
 
+    # return L# + translate([xgap,0])(R)
 
-model = union()(
-    jigsaw(),
-    translate([50,0])(jigsaw(peg_func=sine_peg,xgap=0)),
-    translate([-30,0])(sine_wave()),
-)
+h = 40
+model = linear_extrude(6)(union()(
+    # jigsaw(),
+    translate([50,0])(jigsaw(h=h,peg_func=sine_peg,xgap=0)),
+    jigsaw(h=h,peg_func=sine_peg,xgap=0, opp=True),
+    # translate([-30,0])(sine_wave()),
+))
 
 if __name__ == '__main__':
     # h = 63.7
