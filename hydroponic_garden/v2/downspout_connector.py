@@ -32,19 +32,18 @@ shelf_depth = 13.5*in2mm
 #     return model
 
 
-# # hexagonal hole pattern
-# def hatch(sz=[100,100], r=2, th=1):
-#     h = square(sz)
-#     dx = r*2*.866 + th
-#     dy = r*2*0.75 + th
+# hexagonal hole pattern
+def hatch(sz=[100,100], r=2, th=1):
+    h = square(sz)
+    dx = r*2*.866 + th
+    dy = r*2*0.75 + th
 
-#     for i in range(ceil(sz[0]/r)):
-#         for j in range(ceil(sz[1]/r)):
-#             xs = r if (j % 2 == 0) else 0
-#             h -= translate([i*dx+xs, j*dy])(
-#                 rotate(30)(circle(r=r, segments=6)))
-#     return h
-
+    for i in range(ceil(sz[0]/r)):
+        for j in range(ceil(sz[1]/r)):
+            xs = r if (j % 2 == 0) else 0
+            h -= translate([i*dx+xs, j*dy])(
+                rotate(30)(circle(r=r, segments=6)))
+    return h
 
 
 def rrect(w, h, r):
@@ -66,12 +65,17 @@ def downspout_profile():
 DEFAULT_ENDCAP_BACK_TH = 2
 # DEFAULT_ENDCAP_TOTAL_H = 10
 class Endcap(Part):
-    def __init__(self, w=w, h=h, wall_th=1, back_th=DEFAULT_ENDCAP_BACK_TH):
+    def __init__(self,
+        w=w,
+        h=h,
+        wall_th=1,
+        wall_h = 8,
+        back_th=DEFAULT_ENDCAP_BACK_TH,
+        ):
         super().__init__()
-        # w, h, r dimensions are for the *outside* of the tube.
+        # w, h, r dimensions are for the *outside* of the downspout tube.
         # inner width = w - 2*th.
 
-        wall_h = 8
         total_h = wall_h + back_th
 
         base = translate([-wall_th, -wall_th])(
@@ -182,7 +186,13 @@ class Endcap180Connector(Part):
 downspout_chunk_len = shelf_width - 2*in2mm
 
 class Downspout(Part):
-    def __init__(self, l=downspout_chunk_len, has_holes=True, hole_spacing=20, hole_r=1*in2mm):
+    def __init__(self,
+        l=downspout_chunk_len,
+
+        has_holes=True,
+        hole_spacing=20,
+        hole_r=1*in2mm
+        ):
         super().__init__()
         d = color("white")(
                 linear_extrude(l)(
@@ -215,6 +225,7 @@ def shelf_plumbing():
     c2 = Endcap180Connector()
     asm += attach(d1.con['front'], c2.con['left'])(c2)
 
+    # TODO: attachments aren't smart enough to do this :(
     # d3 = Downspout()
     # asm += attach(c2.con['right'], d3.con['front'])(d3)
 
@@ -253,20 +264,23 @@ def jigsaw_piece(dx, th, opp=False):
 
 
 class EndcapWithPegs(Part):
-    def __init__(self):
+    def __init__(self,
+        # dimensions are based on the 180 connector that it connects to
+        e180 = Endcap180Connector(),
+        ):
         super().__init__()
 
-        e180 = Endcap180Connector()
-        th = e180.backing_th
-        e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
         j = jigsaw_piece(dx=e180.dx, th=e180.backing_th)
-        self.add(render()(union()(e, j)))
+        self.add(render()(
+            Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+e180.backing_th),
+            j,
+        ))
 
 
 def shelf_sxs():
     ec = Endcap180Connector()
     asm = ec
-    asm += translate([ec.dx*2, 0, 0])(EndcapWithPegs())
+    asm += translate([ec.dx*2+w+20, h, 0])(rotate([0,0,180])(EndcapWithPegs()))
     return asm
 
 
@@ -294,8 +308,17 @@ def hatchring():
 #         [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
 #         )
 
-def jigsaw_test_piece():
-    return render()(jigsaw_piece(30, 10, opp=True))
+def jigsaw_test_piece(opp=True):
+    return render()(jigsaw_piece(30, 10, opp=opp))
+
+def both_jigsaw_test_pieces():
+    return union()(
+            render()(
+                jigsaw_test_piece(opp=True)),
+            translate([130, 60])(
+                rotate([0,0,180])(
+                    render()(
+                        jigsaw_test_piece(opp=False)))))
 
 
 if __name__ == '__main__':
@@ -304,7 +327,7 @@ if __name__ == '__main__':
         ("endcap", with_conn(Endcap())),
         ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),
-        # ("hatch", hatch()),
+        ("hatch", hatchring()),
         ("endcap 180", Endcap180Connector()),
         ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(
@@ -313,7 +336,7 @@ if __name__ == '__main__':
     ], spacing=400)
 
     # model = Endcap180Connector()
-    # model = jigsaw_test_piece()
+    model = both_jigsaw_test_pieces()
 
     # write scad
     fname = "out.scad"

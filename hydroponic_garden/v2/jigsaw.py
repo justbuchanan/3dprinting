@@ -1,10 +1,7 @@
-from solid import *
-from math import sin, cos, pi
+# from solid import circle, translate, cube
 import math
 from solid.utils import *
-# from solid.utils import *
 from tools.util import item_grid, Part
-
 
 
 # Returns a 2d profile that should be *cut out* of the part.
@@ -28,49 +25,43 @@ class Jigsaw2(Part):
         dy = h / n
         r1 = dy / 3
         r2 = r1 / 2
-
         dx = r1 * 2
-
-        n += 1
-
         start_y = -dy/2 if opp else 0
-
-
-        m = union()(*[
-                translate([r1, start_y + dy * (i+ 1/2)])(
-                    hull()(
-                        circle(r1+gap_extra_r),
-                        translate([joint_w, 0])(
-                            circle(r2+gap_extra_r))))
-                for i in range(n)
-            ],
-
-            translate([r1+joint_w, 0])(
-                difference()(
-                    square([20, h]),
-                    *[translate([0, start_y+i*dy])(circle(r1)) for i in range(n)],
-                )
-            )
-        )
-
-
-        self.add(m)
+        n += 1
 
         # export variables
         self.w = r1*2 + joint_w
 
+        self.add(translate([r1,0,0])(union()(*[
+                translate([0, start_y + dy * (i+ 1/2)])(
+                    hull()(
+                        circle(r1+gap_extra_r),
+                        translate([joint_w, 0])(
+                            circle(r2+gap_extra_r))))
+                    for i in range(n)
+                ],
 
-def part2():
+                translate([joint_w, 0])(
+                    difference()(
+                        square([20, h]),
+                        *[translate([0, start_y+i*dy])(
+                            circle(r1))
+                        for i in range(n)],
+                    )
+                )
+            )
+        ))
+
+
+def demo_part():
     return square([20, h]) - Jigsaw2(h)
 
 
 if __name__ == '__main__':
     h = 63.7
     model = item_grid([
-        ("part2", part2()),
-        # ("part2", part2()),
-        # ("jigsaw", jigsaw(h)),
-        ("jigsaw2", Jigsaw2(h)),
+        ("demo part", demo_part()),
+        ("jigsaw", Jigsaw2(h)),
     ], spacing=100)
 
     # write scad
