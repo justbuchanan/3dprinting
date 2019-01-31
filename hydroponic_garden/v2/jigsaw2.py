@@ -3,90 +3,88 @@ from solid.utils import *
 from tools.util import item_grid, Part
 import numpy as np
 
-INC = 0.001
 
-
-# tol: subtracted from the y on each side.
-def sine_peg(peg_w, dy, amp=1.5, opp=False, tol=0.05):
+# tol: subtracted from the y on each side. Tried 0.05 initially. They were pretty tight
+def sine_peg(peg_w, peg_cycle_ht, amp=1.5, opp=False, tol=0.1):
     endangle = 2*pi
     t2w = peg_w/endangle
 
     # return cube(1)
-    def wave(theta, dy):
-        return (theta*t2w, -math.sin(theta)*amp+dy)
+    def wave(theta, peg_cycle_ht):
+        return (theta*t2w, -math.sin(theta)*amp+peg_cycle_ht)
 
-    vspace = dy/2 - tol*2
+    vspace = peg_cycle_ht/2 - tol*2
 
     npoint = 100
 
     return translate([0, tol])(polygon([
         *[
-            wave(theta,dy=vspace)
+            wave(theta,peg_cycle_ht=vspace)
             for theta in np.linspace(0, endangle, num=npoint)
         ],
         *[
-            (theta*t2w,wave(-theta,dy=0)[1])
+            (theta*t2w,wave(-theta,peg_cycle_ht=0)[1])
             for theta in np.linspace(endangle, 0, num=npoint)
         ],
         ]))
 
-def rect_peg(peg_w, dy, opp=False):
-    return square([peg_w, dy/2])
+
+def rect_peg(peg_w, peg_cycle_ht, opp=False):
+    return square([peg_w, peg_cycle_ht/2])
 
 
-def jigsaw(h, desired_cycle_wid=12, peg_func=rect_peg, opp=False):
-    # n = 3
-    n = math.floor(h / desired_cycle_wid)
-    dy = h / n
+def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=rect_peg, opp=False):
+    # Calculate number of pegs so that we're close, but not over our desired peg height
+    n = math.floor(h / max_peg_cycle_ht)
+    peg_cycle_ht = h / n
+    n = round(h / peg_cycle_ht)
+    # Add an extra one to ensure we're covered. Any excess will be trimmed off at the end
+    n = n + 1
 
-    n = 7
-
-    peg_w = 10
-    part_w = 3
-    total_w = part_w + peg_w
-
-    print("jigsaw: dy: {dy}; n: {n}; peg_w: {peg_w}".format(dy=dy, n=n, peg_w=peg_w))
-
-    part = square([part_w, h])
+    # print("jigsaw: peg_cycle_ht: {peg_cycle_ht}; n: {n}; peg_w: {peg_w}".format(peg_cycle_ht=peg_cycle_ht, n=n, peg_w=peg_w))
 
     # Shift so that opposing parts intermesh correctly
-    # Opposing pegs are spaced 1/4*dy offset from one another
+    # Opposing pegs are spaced 1/4*peg_cycle_ht offset from one another
     y_shift_mul = 1/4 if opp else -1/4
-    pegs = union()([
-        translate([part_w-INC,dy*(i+y_shift_mul)])(
-            peg_func(peg_w,dy))
-        for i in range(n)])
+    return intersection()(
+        # all of the pegs
+        union()([
+            translate([0, peg_cycle_ht * (i+y_shift_mul)])(
+                peg_func(peg_w, peg_cycle_ht))
+            for i in range(n)]
+        ),
 
-    # TODO: intersect with bounding rect
-    return color("red")(intersection()(
-        part + pegs,
-        square([total_w, h]),
-        ))
+        # trim pegs to fit in this rect
+        square([peg_w, h]),
+    )
 
 def jigsaw_test(**kwargs):
     left = jigsaw(opp=False, **kwargs)
     right = jigsaw(opp=True, **kwargs)
 
-    R = translate([16,kwargs['h']])(rotate(180)(right))
+    peg_w=10
+    R = translate([peg_w,kwargs['h']])(rotate(180)(right))
 
     L = render()(left - R)
     R = render()(R - left)
-    # R = 
 
     return color("red")(L) + color("green")(R)
 
 def both(h):
+    rr = translate([-3, 0])(square([3+INC, h]))
     return linear_extrude(6)(union()(
             # an interlocking set of demo pieces
-            translate([20,0])(
-                jigsaw(h=h, peg_func=sine_peg)),
-            jigsaw(h=h,peg_func=sine_peg, opp=True)))
+            translate([30,h])(rotate(180)(
+                rr + jigsaw(h=h, peg_func=sine_peg))),
+            rr + jigsaw(h=h,peg_func=sine_peg, opp=True)))
 
 h = 40
 model = item_grid([
     ("demo", both(h)),
     ("test", jigsaw_test(h=h,peg_func=sine_peg)),
-    ("peg", sine_peg(peg_w=10, dy=13)),
+    ("peg", sine_peg(peg_w=10, peg_cycle_ht=13)),
+    ("rect jig test", jigsaw_test(h=h)),
+    ("rect jig", jigsaw(h=h)),
 ])
 
 if __name__ == '__main__':
