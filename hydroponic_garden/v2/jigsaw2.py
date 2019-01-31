@@ -34,8 +34,9 @@ def rect_peg(peg_w, dy, opp=False):
     return square([peg_w, dy/2])
 
 
-def jigsaw(h=100, peg_func=rect_peg, xgap=0.2, opp=False):
-    n = 3
+def jigsaw(h, desired_cycle_wid=12, peg_func=rect_peg, opp=False):
+    # n = 3
+    n = math.floor(h / desired_cycle_wid)
     dy = h / n
 
     n = 7
@@ -44,51 +45,51 @@ def jigsaw(h=100, peg_func=rect_peg, xgap=0.2, opp=False):
     part_w = 3
     total_w = part_w + peg_w
 
+    print("jigsaw: dy: {dy}; n: {n}; peg_w: {peg_w}".format(dy=dy, n=n, peg_w=peg_w))
+
     part = square([part_w, h])
 
-    dddyyy = 1/4 if opp else -1/4
-
+    # Shift so that opposing parts intermesh correctly
+    # Opposing pegs are spaced 1/4*dy offset from one another
+    y_shift_mul = 1/4 if opp else -1/4
     pegs = union()([
-        translate([part_w-INC,dy*(i+dddyyy)])(
+        translate([part_w-INC,dy*(i+y_shift_mul)])(
             peg_func(peg_w,dy))
         for i in range(n)])
-    left = color("red")(
-            part,
-            pegs,
-        )
-    right = color("green")(
-        translate([total_w+part_w, h])(
-            rotate([0,0,180])(
-                part,
-                pegs
-                )))
-
-    L = left #- right
-    R = right #- left
 
     # TODO: intersect with bounding rect
     return color("red")(intersection()(
-        L,
+        part + pegs,
         square([total_w, h]),
         ))
 
-    # return L# + translate([xgap,0])(R)
+def jigsaw_test(**kwargs):
+    left = jigsaw(opp=False, **kwargs)
+    right = jigsaw(opp=True, **kwargs)
+
+    R = translate([16,kwargs['h']])(rotate(180)(right))
+
+    L = render()(left - R)
+    R = render()(R - left)
+    # R = 
+
+    return color("red")(L) + color("green")(R)
+
+def both(h):
+    return linear_extrude(6)(union()(
+            # an interlocking set of demo pieces
+            translate([20,0])(
+                jigsaw(h=h, peg_func=sine_peg)),
+            jigsaw(h=h,peg_func=sine_peg, opp=True)))
 
 h = 40
-model = linear_extrude(6)(union()(
-    # jigsaw(),
-    translate([50,0])(jigsaw(h=h,peg_func=sine_peg,xgap=0)),
-    jigsaw(h=h,peg_func=sine_peg,xgap=0, opp=True),
-    # translate([-30,0])(sine_wave()),
-))
+model = item_grid([
+    ("demo", both(h)),
+    ("test", jigsaw_test(h=h,peg_func=sine_peg)),
+    ("peg", sine_peg(peg_w=10, dy=13)),
+])
 
 if __name__ == '__main__':
-    # h = 63.7
-    # model = item_grid([
-    #     ("demo part", demo_part()),
-    #     ("jigsaw", Jigsaw2(h)),
-    # ], spacing=100)
-
     # write scad
     fn = 100
     fname = "out.scad"
