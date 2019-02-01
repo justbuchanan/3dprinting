@@ -9,7 +9,7 @@ in2mm = 25.4
 
 fn = 100
 
-w = 78.7
+DOWNSPOUT_OUTER_W = 78.7
 h = 58.7
 r = 15
 
@@ -46,19 +46,19 @@ def rrect(w, h, r):
 
 # thickness of vinyl downspout walls
 downspout_th = 2
-class downspout_profile(Part):
+class DownspoutProfile(Part):
     def __init__(self):
         super().__init__()
         th = downspout_th
-        p = rrect(w, h, r) \
-              - translate([th,th])(rrect(w-2*th, h-2*th, r-th))
+        p = rrect(DOWNSPOUT_OUTER_W, h, r) \
+              - translate([th,th])(rrect(DOWNSPOUT_OUTER_W-2*th, h-2*th, r-th))
         self.add(p)
 
 DEFAULT_ENDCAP_BACK_TH = 2
 # DEFAULT_ENDCAP_TOTAL_H = 10
 class Endcap(Part):
     def __init__(self,
-        w=w,
+        w=DOWNSPOUT_OUTER_W,
         h=h,
         wall_th=1,
         wall_h = 8,
@@ -68,35 +68,37 @@ class Endcap(Part):
         # w, h, r dimensions are for the *outside* of the downspout tube.
         # inner width = w - 2*th.
 
-        total_h = wall_h + back_th
+        total_z_ht = wall_h + back_th
 
-        base = translate([-wall_th, -wall_th])(
-                rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
-        base = linear_extrude(total_h)(base)
+        base = linear_extrude(total_z_ht)(
+                    rrect(w+wall_th*2, h+wall_th*2, r+wall_th))
 
         # hollow out large middle portion
         dth = downspout_th + wall_th
-        base -= translate([dth,dth,back_th])(
-                    linear_extrude(total_h)(
+        center_hollow = translate([wall_th+dth, wall_th+dth, back_th])(
+                    linear_extrude(total_z_ht)(
                         rrect(w-dth*2, h-dth*2,r-dth)))
 
         # cut out profile for downspout
-        base -= translate([0,0,back_th])(
-                    linear_extrude(total_h)(
-                        downspout_profile()))
+        downspout = translate([wall_th, wall_th, back_th])(
+                        linear_extrude(total_z_ht)(
+                            DownspoutProfile()))
 
-        self.add(base)
-        self.con['main'] = Connector([w/2, h/2, back_th], [0.01,0.01,1])
+        e = base - center_hollow - downspout
+        self.add(e)
+        self.con['main'] = Connector(
+            [wall_th+w/2, wall_th+h/2, back_th],
+            [0.01,0.01,1])
 
         # export variables for inspection
         self.back_th = back_th
-        self.total_h = total_h
-        self.h = h # TODO: not right
-        self.w = w
+        self.total_z_ht = total_z_ht
+        self.h = h + 2*wall_th
+        self.total_w = w + 2*wall_th
         self.wall_th = wall_th
 
 
-downspout_spacing = (shelf_depth - 3*w - 2*in2mm)/2
+downspout_spacing = (shelf_depth - 3*DOWNSPOUT_OUTER_W - 2*in2mm)/2
 # print("downspout spacing: {}".format(downspout_spacing))
 
 class Endcap180Connector(Part):
@@ -115,12 +117,8 @@ class Endcap180Connector(Part):
         """
         super().__init__(collect_subconnectors=False)
 
-        # TODO: clarify when wall_th is taken into account
-
-        # TODO: shift to be around zero
-
         # center-to-center distance between the two endcaps.
-        dx = w + downspout_spacing - wall_th*2
+        dx = DOWNSPOUT_OUTER_W + downspout_spacing - wall_th*2
 
         # add two endcaps
         # INC makes a slight overlap to embed endcaps into backing
@@ -135,9 +133,9 @@ class Endcap180Connector(Part):
 
         # thickness of main backing body
         backing_th = chan_wall_th*2 + chan_w # TODO calculate from chan_wall_th
-        conn += translate([-wall_th, -wall_th, -backing_th])(
+        conn += translate([0, 0, -backing_th])(
                     linear_extrude(backing_th)(
-                        rrect(w+dx+wall_th*2, h+wall_th*2, r+wall_th)))
+                        rrect(DOWNSPOUT_OUTER_W+dx+wall_th*2, h+wall_th*2, r+wall_th)))
 
         # add jigsaw connector
         conn += translate([dx, 0, -backing_th])(
@@ -145,12 +143,12 @@ class Endcap180Connector(Part):
 
 
         # water channel holes in back of endcaps
-        for x in [w/2+wall_th, w/2+wall_th + dx]:
+        for x in [DOWNSPOUT_OUTER_W/2+wall_th, DOWNSPOUT_OUTER_W/2+wall_th + dx]:
             conn -= translate([x, h/2+wall_th, -backing_th+chan_wall_th])(
                         cylinder(r=hole_r, h=100))
 
         # horizontal channel connecting two water holes
-        conn -= translate([w/2+wall_th, h/2+wall_th-chan_h/2, -chan_wall_th])(
+        conn -= translate([DOWNSPOUT_OUTER_W/2+wall_th, h/2+wall_th-chan_h/2, -chan_wall_th])(
                 rotate([0, 90, 0])(
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
@@ -167,8 +165,8 @@ class Endcap180Connector(Part):
         conn = render()(conn)
 
         self.add(color("gray")(conn))
-        self.con['left'] = Connector([w/2, h/2, 0.001], [.001,.001,1])
-        self.con['right'] = Connector([w/2 + dx, h/2, 0], [0.001,.001,1])
+        self.con['left'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, 0.001], [.001,.001,1])
+        self.con['right'] = Connector([DOWNSPOUT_OUTER_W/2 + dx, h/2, 0], [0.001,.001,1])
 
         # export variables
         self.backing_th = backing_th
@@ -188,7 +186,7 @@ class Downspout(Part):
         super().__init__()
         d = color("white")(
                 linear_extrude(l)(
-                    downspout_profile()))
+                    DownspoutProfile()))
 
         if has_holes:
             n = math.floor((l - hole_spacing) / (hole_spacing + hole_r*2))
@@ -196,14 +194,14 @@ class Downspout(Part):
             # print("n = %d" % n)
             for i in range(n):
                 d -= rotate([0,0,0])(rotate([-90, 0, 0])(
-                        translate([w/2, -(sp + hole_r + i*(sp+hole_r*2)), h/2])(
+                        translate([DOWNSPOUT_OUTER_W/2, -(sp + hole_r + i*(sp+hole_r*2)), h/2])(
                             cylinder(r=hole_r, h=100))))
 
 
         self.add(color("white")(render()(d)))
 
-        self.con['back'] = Connector([w/2, h/2, 0], [0.001,0.001,1])
-        self.con['front'] = Connector([w/2, h/2, l], [0.001,0.001,-1]) #/////////////////////////////////
+        self.con['back'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, 0], [0.001,0.001,1])
+        self.con['front'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, l], [0.001,0.001,-1]) #/////////////////////////////////
 
 def shelf_plumbing():
     c = Endcap180Connector()
@@ -245,12 +243,14 @@ def shelf_plumbing():
 def jigsaw_piece(dx, th, peg_w=10, opp=False):
     # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-    jig = jigsaw2.jigsaw(h+2*INC+2*e.wall_th, max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
-    wwww = dx/2 - peg_w /2
-    return translate([e.w/2-e.wall_th, -e.wall_th, 0])(
+    jig = jigsaw2.jigsaw(h+2*(e.wall_th+INC), max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
+    # total w is width of piece up until the end of the pegs
+    # note that only half of peg length is counted
+    total_w = dx/2 - peg_w / 2
+    return translate([e.total_w/2, 0, 0])(
             union()(
-                cube([wwww, e.h+2*e.wall_th, th]),
-                translate([wwww-INC, 0, 0])(
+                cube([total_w, e.h, th]),
+                translate([total_w-INC, 0, 0])(
                     linear_extrude(th)(
                         jig))))
 
@@ -272,7 +272,7 @@ class EndcapWithPegs(Part):
 def shelf_sxs():
     ec = Endcap180Connector()
     asm = ec
-    asm += translate([ec.dx*2+w+20, h, 0])(rotate([0,0,180])(EndcapWithPegs()))
+    asm += translate([ec.dx*2+DOWNSPOUT_OUTER_W+20, h, 0])(rotate([0,0,180])(EndcapWithPegs()))
     return asm
 
 
@@ -320,7 +320,7 @@ def both_jigsaw_test_pieces():
 
 if __name__ == '__main__':
     model = item_grid([
-        ("downspout profile", downspout_profile()),
+        ("downspout profile", DownspoutProfile()),
         ("endcap", with_conn(Endcap())),
         # ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),

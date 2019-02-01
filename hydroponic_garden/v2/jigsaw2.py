@@ -5,7 +5,8 @@ import numpy as np
 
 
 # tol: subtracted from the y on each side. Tried 0.05 initially. They were pretty tight
-def sine_peg(peg_w, peg_cycle_ht, amp=1.5, opp=False, tol=0.1):
+# also tried tol=0.1, seemed slightly loose
+def sine_peg(peg_w, peg_cycle_ht, amp=1.5, opp=False, tol=0.05):
     endangle = 2*pi
     t2w = peg_w/endangle
 
@@ -60,15 +61,14 @@ def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, opp=False):
 
 def jigsaw_test(**kwargs):
     left = jigsaw(opp=False, **kwargs)
-    right = jigsaw(opp=True, **kwargs)
+    right = translate([kwargs['peg_w'], kwargs['h']])(
+                rotate(180)(
+                    jigsaw(opp=True, **kwargs)))
 
-    peg_w=10
-    R = translate([peg_w,kwargs['h']])(rotate(180)(right))
+    L = left - right
+    R = right - left
 
-    L = render()(left - R)
-    R = render()(R - left)
-
-    return color("red")(L) + color("green")(R)
+    return color("red")(render()(L)) + color("green")(render()(R))
 
 def both(h):
     rr = translate([-3, 0])(square([3+INC, h]))
@@ -81,9 +81,9 @@ def both(h):
 h = 40
 model = item_grid([
     ("demo", both(h)),
-    ("test", jigsaw_test(h=h,peg_func=sine_peg)),
+    ("test", jigsaw_test(h=h, peg_w=10, peg_func=sine_peg)),
     ("peg", sine_peg(peg_w=10, peg_cycle_ht=13)),
-    ("rect jig test", jigsaw_test(h=h, peg_func=rect_peg)),
+    ("rect jig test", jigsaw_test(h=h, peg_w=10, peg_func=rect_peg)),
     ("rect jig", jigsaw(h=h)),
 ])
 
