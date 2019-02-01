@@ -83,7 +83,7 @@ model = item_grid([
     ("demo", both(h)),
     ("test", jigsaw_test(h=h,peg_func=sine_peg)),
     ("peg", sine_peg(peg_w=10, peg_cycle_ht=13)),
-    ("rect jig test", jigsaw_test(h=h)),
+    ("rect jig test", jigsaw_test(h=h, peg_func=rect_peg)),
     ("rect jig", jigsaw(h=h)),
 ])
 

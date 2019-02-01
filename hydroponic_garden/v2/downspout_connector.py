@@ -1,14 +1,9 @@
 from solid import *
-from math import sin, cos, pi
-import numpy as np
 import math
-from solid.utils import *
-from functools import reduce
 from solid.utils import *
 from tools.util import *
 import jigsaw2
 
-INC = 0.001
 
 in2mm = 25.4
 
@@ -24,17 +19,21 @@ shelf_depth = 13.5*in2mm
 
 
 # hexagonal hole pattern
-def hatch(sz=[100,100], r=2, th=1):
+def hatch(sz=[100,100], r=2, wall_th=1):
     h = square(sz)
-    dx = r*2*.866 + th
-    dy = r*2*0.75 + th
+    dx = r*2*.866 + wall_th
+    dy = r*1.5 + wall_th
 
+    holes = union()
     for i in range(ceil(sz[0]/r)):
         for j in range(ceil(sz[1]/r)):
-            xs = r if (j % 2 == 0) else 0
-            h -= translate([i*dx+xs, j*dy])(
+            # shirt alternate layers horizontally relative to eachother
+            xshift = r if (j % 2 == 0) else 0
+            # cut out a hexagon at each location
+            holes += translate([i*dx+xshift, j*dy])(
                 rotate(30)(circle(r=r, segments=6)))
-    return h
+    return h - holes
+
 
 
 def rrect(w, h, r):
@@ -47,11 +46,13 @@ def rrect(w, h, r):
 
 # thickness of vinyl downspout walls
 downspout_th = 2
-def downspout_profile():
-    th = downspout_th
-    p = rrect(w, h, r) \
-          - translate([th,th])(rrect(w-2*th, h-2*th, r-th))
-    return p
+class downspout_profile(Part):
+    def __init__(self):
+        super().__init__()
+        th = downspout_th
+        p = rrect(w, h, r) \
+              - translate([th,th])(rrect(w-2*th, h-2*th, r-th))
+        self.add(p)
 
 DEFAULT_ENDCAP_BACK_TH = 2
 # DEFAULT_ENDCAP_TOTAL_H = 10
@@ -223,23 +224,23 @@ def shelf_plumbing():
     # asm = cube()
     return asm
 
-class EndcapWithHole(Part):
-    def __init__(self,
-        hole_r = 10,
-        wall_th = 1,
-        ):
-        super().__init__()
+# class EndcapWithHole(Part):
+#     def __init__(self,
+#         hole_r = 10,
+#         wall_th = 1,
+#         ):
+#         super().__init__()
 
-        e = Endcap()
+#         e = Endcap()
 
-        z = 10
-        e += translate([-wall_th,-wall_th,-z])(linear_extrude(10)(
-                rrect(w+wall_th*2, h+wall_th*2, r+wall_th)))
+#         z = 10
+#         e += translate([-wall_th,-wall_th,-z])(linear_extrude(z)(
+#                 rrect(w+wall_th*2, h+wall_th*2, r+wall_th)))
 
-        e -= translate([w/2, h/2, -5])(
-            cylinder(r=hole_r, h=100))
+#         e -= translate([w/2, h/2, -5])(
+#             cylinder(r=hole_r, h=100))
 
-        self.add(e)
+#         self.add(e)
 
 def jigsaw_piece(dx, th, peg_w=10, opp=False):
     # print("jigsaw({}, {}".format(dx, th))
@@ -279,19 +280,24 @@ def with_conn(x):
     return x + x.draw_connectors()
 
 # A circle with hexagonal holes.
-def hatchring():
-    r = 10
-    hex_th=0.5
-    circ_th=1
+def hatchring(
+    r=50,
+    hex_th=0.5,
+    circ_th=1,
+    ):
 
     # hatch
     h = translate([-r*2, -r*2])(
-            hatch(sz=[50, 50], r=1, th=hex_th))
+            hatch(sz=[r*4, r*4], r=1, wall_th=hex_th))
     # boundary circle
-    h += circle(r=r) - circle(r=r-circ_th)
-    # trim off everything outside the circle
-    h = intersection()(h, circle(r))
-    return h
+    ring = circle(r=r) - circle(r=r-circ_th)
+    return render()(
+        intersection()(
+            h + ring,
+            # trim off everything outside the circle
+            circle(r)
+        )
+    )
 
 # def ball():
 #     return difference()(
@@ -316,19 +322,17 @@ if __name__ == '__main__':
     model = item_grid([
         ("downspout profile", downspout_profile()),
         ("endcap", with_conn(Endcap())),
-        ("endcap2", with_conn(EndcapWithHole())),
+        # ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),
         ("hatch", hatchring()),
         ("endcap 180", Endcap180Connector()),
         ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(
                         with_conn(Downspout()))),
-        ("jigsaw piee", jigsaw_test_piece()),
+        ("jigsaw demo", jigsaw_test_piece()),
+        ("jigsaw demo 2", both_jigsaw_test_pieces()),
     ], spacing=400)
 
-    # model = EndcapWithPegs()
-    # model = both_jigsaw_test_pieces()
-    model = Endcap180Connector()
 
     # write scad
     fname = "out.scad"
