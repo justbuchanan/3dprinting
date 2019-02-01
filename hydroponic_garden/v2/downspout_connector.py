@@ -9,6 +9,7 @@ in2mm = 25.4
 
 fn = 100
 
+# outer dimensions
 DOWNSPOUT_OUTER_W = 78.7
 h = 58.7
 r = 15
@@ -106,7 +107,7 @@ class Endcap180Connector(Part):
     # thickness of connector wall
     def __init__(self,
         downspout_spacing=downspout_spacing,
-        wall_th = 1,
+        # wall_th = 1,
         endcap_th = 2,
         # water hole cut out of each endcap that connects to channel
         hole_r = 10,
@@ -117,13 +118,19 @@ class Endcap180Connector(Part):
         """
         super().__init__(collect_subconnectors=False)
 
-        # center-to-center distance between the two endcaps.
-        dx = DOWNSPOUT_OUTER_W + downspout_spacing - wall_th*2
+
 
         # add two endcaps
+        e1, e2 = Endcap(), Endcap()
+
+        # center-to-center distance between the two endcaps.
+        dx = DOWNSPOUT_OUTER_W + downspout_spacing - e1.wall_th*2
+
         # INC makes a slight overlap to embed endcaps into backing
         conn = translate([0, 0, -endcap_th+INC])(
-                Endcap() + translate([dx, 0])(Endcap()))
+                e1,
+                translate([dx, 0])(
+                    e2))
 
 
         # distance from back of wall to start of water hole/channel
@@ -135,20 +142,19 @@ class Endcap180Connector(Part):
         backing_th = chan_wall_th*2 + chan_w # TODO calculate from chan_wall_th
         conn += translate([0, 0, -backing_th])(
                     linear_extrude(backing_th)(
-                        rrect(DOWNSPOUT_OUTER_W+dx+wall_th*2, h+wall_th*2, r+wall_th)))
+                        rrect(e1.total_w+dx, e1.h, r+e1.wall_th)))
 
         # add jigsaw connector
         conn += translate([dx, 0, -backing_th])(
             jigsaw_piece(dx=dx, th=backing_th, opp=True))
 
-
         # water channel holes in back of endcaps
-        for x in [DOWNSPOUT_OUTER_W/2+wall_th, DOWNSPOUT_OUTER_W/2+wall_th + dx]:
-            conn -= translate([x, h/2+wall_th, -backing_th+chan_wall_th])(
+        for x in [e1.total_w/2, e1.total_w/2 + dx]:
+            conn -= translate([x, e1.h/2, -backing_th+chan_wall_th])(
                         cylinder(r=hole_r, h=100))
 
         # horizontal channel connecting two water holes
-        conn -= translate([DOWNSPOUT_OUTER_W/2+wall_th, h/2+wall_th-chan_h/2, -chan_wall_th])(
+        conn -= translate([e1.total_w/2, (e1.h-chan_h)/2, -chan_wall_th])(
                 rotate([0, 90, 0])(
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
@@ -243,14 +249,14 @@ def shelf_plumbing():
 def jigsaw_piece(dx, th, peg_w=10, opp=False):
     # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-    jig = jigsaw2.jigsaw(h+2*(e.wall_th+INC), max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
+    jig = jigsaw2.jigsaw(e.h+2*INC, max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
     # total w is width of piece up until the end of the pegs
     # note that only half of peg length is counted
-    total_w = dx/2 - peg_w / 2
+    rect_w = dx/2 - peg_w / 2
     return translate([e.total_w/2, 0, 0])(
             union()(
-                cube([total_w, e.h, th]),
-                translate([total_w-INC, 0, 0])(
+                cube([rect_w, e.h, th]),
+                translate([rect_w-INC, 0, 0])(
                     linear_extrude(th)(
                         jig))))
 
@@ -261,11 +267,9 @@ class EndcapWithPegs(Part):
         e180 = Endcap180Connector(),
         ):
         super().__init__()
-
-        j = jigsaw_piece(dx=e180.dx, th=e180.backing_th)
         self.add(render()(
             Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+e180.backing_th),
-            j,
+            jigsaw_piece(dx=e180.dx, th=e180.backing_th),
         ))
 
 
@@ -333,6 +337,7 @@ if __name__ == '__main__':
         ("jigsaw demo 2", both_jigsaw_test_pieces()),
     ], spacing=400)
 
+    model = shelf_sxs()
 
     # write scad
     fname = "out.scad"
