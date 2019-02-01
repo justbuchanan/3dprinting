@@ -268,7 +268,7 @@ class EndcapWithPegs(Part):
         ):
         super().__init__()
         self.add(render()(
-            Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+e180.backing_th),
+            Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+e180.backing_th-2),
             jigsaw_piece(dx=e180.dx, th=e180.backing_th),
         ))
 
