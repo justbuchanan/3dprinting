@@ -6,7 +6,7 @@ from solid.utils import *
 from functools import reduce
 from solid.utils import *
 from tools.util import *
-import jigsaw
+import jigsaw2
 
 INC = 0.001
 
@@ -21,15 +21,6 @@ r = 15
 # shelf dimensions
 shelf_width = 33*in2mm
 shelf_depth = 13.5*in2mm
-
-
-# def wavy_piece():
-#     amp = 1
-#     wave = [(t, amp*sin(t)) for t in np.linspace(0, 8*pi, num=50)]
-#     # print(wave[0], wave[-1])
-#     h = 5
-#     model = polygon(points = [(wave[0][0],h)] + wave + [(wave[-1][0],h)] )
-#     return model
 
 
 # hexagonal hole pattern
@@ -250,16 +241,16 @@ class EndcapWithHole(Part):
 
         self.add(e)
 
-def jigsaw_piece(dx, th, opp=False):
+def jigsaw_piece(dx, th, peg_w=10, opp=False):
     # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-    jig = jigsaw.Jigsaw2(h+2*INC+2*e.wall_th, r1=6, opp=opp)
-    wwww = dx/2 + jig.w/2
+    jig = jigsaw2.jigsaw(h+2*INC+2*e.wall_th, max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
+    wwww = dx/2 - peg_w /2
     return translate([e.w/2-e.wall_th, -e.wall_th, 0])(
-            difference()(
+            union()(
                 cube([wwww, e.h+2*e.wall_th, th]),
-                translate([wwww-jig.w, -INC, -INC])(
-                    linear_extrude(th*2)(
+                translate([wwww-INC, 0, 0])(
+                    linear_extrude(th)(
                         jig))))
 
 
@@ -335,8 +326,9 @@ if __name__ == '__main__':
         ("jigsaw piee", jigsaw_test_piece()),
     ], spacing=400)
 
-    # model = Endcap180Connector()
-    model = both_jigsaw_test_pieces()
+    # model = EndcapWithPegs()
+    # model = both_jigsaw_test_pieces()
+    model = Endcap180Connector()
 
     # write scad
     fname = "out.scad"

@@ -1,6 +1,6 @@
 import math
 from solid.utils import *
-from tools.util import item_grid, Part
+from tools.util import item_grid, Part, INC
 import numpy as np
 
 
@@ -33,7 +33,7 @@ def rect_peg(peg_w, peg_cycle_ht, opp=False):
     return square([peg_w, peg_cycle_ht/2])
 
 
-def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=rect_peg, opp=False):
+def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, opp=False):
     # Calculate number of pegs so that we're close, but not over our desired peg height
     n = math.floor(h / max_peg_cycle_ht)
     peg_cycle_ht = h / n
