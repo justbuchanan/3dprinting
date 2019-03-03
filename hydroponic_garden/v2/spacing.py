@@ -11,11 +11,12 @@ def format_num(x):
     return "{} + {}/16".format(int(x), int((x - int(x)) * 16))
 
 
+x0 = c2c / 2.0
+
 print("Outer (with %d cups):" % n)
-print("\n".join([format_num(2.5 + c2c * i) for i in range(n)]))
+print("\n".join([format_num(x0 + c2c * i) for i in range(n)]))
 
 print()
 
 print("Inner (with %d cups):" % (n - 1))
-x0 = 2.5 + c2c / 2
-print("\n".join([format_num(x0 + c2c * i) for i in range(n - 1)]))
+print("\n".join([format_num(x0 + c2c * (i + 1 / 2)) for i in range(n - 1)]))
