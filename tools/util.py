@@ -455,19 +455,24 @@ def part_tree_connector_str(model):
 
 def part_grid(model, spacing=100):
     all_parts = sorted(iterate_parts(model), key=lambda p: p.typename)
-    return item_grid(all_parts, spacing)
+    names_and_parts = [(p.typename, p) for p in all_parts]
+    return item_grid(names_and_parts, spacing)
 
 
+# items: list of (name, scadobj) tuples
 def item_grid(items, spacing=100):
     grid_sz = math.ceil(math.sqrt(len(items)))
     part_grid = union()
 
     for i in range(len(items)):
-        p = items[i]
+        name = items[i][0]
+        obj = items[i][1]
         x = i % grid_sz
         y = floor(i / grid_sz)
-        txt = translate([0, -30, 0])(text(p.typename))
-        part_grid += translate([x * spacing, y * spacing, 0])(p, txt)
+        txt = translate([0, -30, 0])(
+                color("black")(
+                    text(name)))
+        part_grid += translate([x * spacing, y * spacing, 0])(obj, txt)
     d = (grid_sz - 1) * spacing / 2
     return translate([-d, -d, 0])(part_grid)
 
