@@ -3,6 +3,9 @@
 # A script to print out the locations for the cup holes in each tube. The holes
 # will be 2" in diameter and evenly-spaced along the tube. The parameters below
 # can be modified for other configurations.
+#
+# This script is stand-alone. Editing the values here does not affect the
+# parameters of the 3d-printed model and vice-versa. (TODO: sp?)
 
 w = 34.0  # total width of tube
 n = 7  # number of holes in two outer tubes. Inner tube has one less

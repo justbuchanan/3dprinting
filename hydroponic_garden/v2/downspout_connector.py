@@ -221,9 +221,6 @@ class EndcapWithPegs(Part):
 
 
 
-def with_conn(x):
-    return x + x.draw_connectors()
-
 def jigsaw_test_piece(odd=True):
     return render()(jigsaw_piece(30, 10, odd=odd))
 
@@ -240,11 +237,10 @@ def both_jigsaw_test_pieces():
 if __name__ == '__main__':
     model = item_grid([
         ("downspout profile", DownspoutProfile()),
-        ("endcap", with_conn(Endcap())),
         ("with pegs", EndcapWithPegs()),
         ("endcap 180", Endcap180Connector()),
         ("downspout", rotate([180,0,0])(
-                        with_conn(Downspout()))),
+                        Downspout())),
         ("jigsaw demo", jigsaw_test_piece()),
         ("jigsaw demo 2", both_jigsaw_test_pieces()),
     ], spacing=220)
