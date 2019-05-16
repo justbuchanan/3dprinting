@@ -1,7 +1,7 @@
 from solid import *
 from solid.utils import *
 import math
-from tools.util import item_grid
+from tools.util import item_grid, Part, Connector, INC
 import jigsaw
 
 # This module provides a design for a 3d-printed endcap for vinyl downspout
@@ -34,7 +34,7 @@ def rrect(w, h, r):
         translate([0, r])(square([w, h-2*r])),
         translate([r, 0])(square([w-2*r, h])),
         translate([r,r])(circle(r)), # bottom right
-        *[translate([x, y])(circle(r)) for x in [r, w-r] for y in [r, h-r]],
+        *[translate([x, y])(circle(r)) for x in [r, w-r] for y in [r, h-r]]
     )
 
 # thickness of vinyl downspout walls
@@ -196,7 +196,7 @@ class Downspout(Part):
 def jigsaw_piece(dx, th, peg_w=10, odd=False):
     # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-    jig = jigsaw2.jigsaw(e.h+2*INC, max_peg_cycle_ht=14, peg_w=peg_w, odd=odd)
+    jig = jigsaw.jigsaw(e.h+2*INC, max_peg_cycle_ht=14, peg_w=peg_w, odd=odd)
     # total w is width of piece up until the end of the pegs
     # note that only half of peg length is counted
     rect_w = dx/2 - peg_w / 2
@@ -243,14 +243,11 @@ if __name__ == '__main__':
         ("endcap", with_conn(Endcap())),
         ("with pegs", EndcapWithPegs()),
         ("endcap 180", Endcap180Connector()),
-        ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(
                         with_conn(Downspout()))),
         ("jigsaw demo", jigsaw_test_piece()),
         ("jigsaw demo 2", both_jigsaw_test_pieces()),
-    ], spacing=400)
-
-    model = shelf_sxs()
+    ], spacing=220)
 
     # write scad
     fname = "out.scad"
