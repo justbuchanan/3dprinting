@@ -1,39 +1,31 @@
 from solid import *
-import math
 from solid.utils import *
-from tools.util import *
-import jigsaw2
+import math
+from tools.util import item_grid
+import jigsaw
+
+# This module provides a design for a 3d-printed endcap for vinyl downspout
+# tubes to build a planting tray for hydroponics. The endcap is printed in two
+# pieces that have a jigsaw connector to connect them together. The larger of
+# the two pieces connects two downspout tubes and has a an embedded channel to
+# allow water to flow between them.
 
 
-in2mm = 25.4
+# The final output will be in mm, so we define a conversion factor for working
+# with inches.
+inch = 25.4
 
+# STL render resolution
 fn = 100
 
 # outer dimensions
-DOWNSPOUT_OUTER_W = 78.7
+downspout_outer_w = 78.7
 h = 58.7
 r = 15
 
 # shelf dimensions
-shelf_width = 33*in2mm
-shelf_depth = 13.5*in2mm
-
-
-# hexagonal hole pattern
-def hatch(sz=[100,100], r=2, wall_th=1):
-    h = square(sz)
-    dx = r*2*.866 + wall_th
-    dy = r*1.5 + wall_th
-
-    holes = union()
-    for i in range(ceil(sz[0]/r)):
-        for j in range(ceil(sz[1]/r)):
-            # shirt alternate layers horizontally relative to eachother
-            xshift = r if (j % 2 == 0) else 0
-            # cut out a hexagon at each location
-            holes += translate([i*dx+xshift, j*dy])(
-                rotate(30)(circle(r=r, segments=6)))
-    return h - holes
+shelf_width = 33*inch
+shelf_depth = 13.5*inch
 
 
 
@@ -51,15 +43,15 @@ class DownspoutProfile(Part):
     def __init__(self):
         super().__init__()
         th = downspout_th
-        p = rrect(DOWNSPOUT_OUTER_W, h, r) \
-              - translate([th,th])(rrect(DOWNSPOUT_OUTER_W-2*th, h-2*th, r-th))
+        p = rrect(downspout_outer_w, h, r) \
+              - translate([th,th])(rrect(downspout_outer_w-2*th, h-2*th, r-th))
         self.add(p)
 
 DEFAULT_ENDCAP_BACK_TH = 2
 # DEFAULT_ENDCAP_TOTAL_H = 10
 class Endcap(Part):
     def __init__(self,
-        w=DOWNSPOUT_OUTER_W,
+        w=downspout_outer_w,
         h=h,
         wall_th=1,
         wall_h = 8,
@@ -99,7 +91,7 @@ class Endcap(Part):
         self.wall_th = wall_th
 
 
-downspout_spacing = (shelf_depth - 3*DOWNSPOUT_OUTER_W - 2*in2mm)/2
+downspout_spacing = (shelf_depth - 3*downspout_outer_w - 2*inch)/2
 # print("downspout spacing: {}".format(downspout_spacing))
 
 class Endcap180Connector(Part):
@@ -119,12 +111,11 @@ class Endcap180Connector(Part):
         super().__init__(collect_subconnectors=False)
 
 
-
         # add two endcaps
         e1, e2 = Endcap(), Endcap()
 
         # center-to-center distance between the two endcaps.
-        dx = DOWNSPOUT_OUTER_W + downspout_spacing - e1.wall_th*2
+        dx = downspout_outer_w + downspout_spacing - e1.wall_th*2
 
         # INC makes a slight overlap to embed endcaps into backing
         conn = translate([0, 0, -endcap_th+INC])(
@@ -146,7 +137,7 @@ class Endcap180Connector(Part):
 
         # add jigsaw connector
         conn += translate([dx, 0, -backing_th])(
-            jigsaw_piece(dx=dx, th=backing_th, opp=True))
+            jigsaw_piece(dx=dx, th=backing_th, odd=True))
 
         # water channel holes in back of endcaps
         for x in [e1.total_w/2, e1.total_w/2 + dx]:
@@ -159,35 +150,28 @@ class Endcap180Connector(Part):
                     linear_extrude(dx)(
                         square([chan_w, chan_h]))))
 
-        # # add cross-hatch filter/screen to entry holes
-        # # TODO: make this a dome? this flat bridge currently doesn't print well
-        # screen_th=2
-        # for x in [0, dx]:
-        #     conn += translate([w/2+wall_th - hole_r*1.5 + x, h/2+wall_th-hole_r*1.5, -screen_th])(
-        #                 linear_extrude(screen_th)(
-        #                     hatch(sz=[hole_r*3, hole_r*3], r=2, th=1.2)))
-
 
         conn = render()(conn)
 
         self.add(color("gray")(conn))
-        self.con['left'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, 0.001], [.001,.001,1])
-        self.con['right'] = Connector([DOWNSPOUT_OUTER_W/2 + dx, h/2, 0], [0.001,.001,1])
+        self.con['left'] = Connector([downspout_outer_w/2, h/2, 0.001], [.001,.001,1])
+        self.con['right'] = Connector([downspout_outer_w/2 + dx, h/2, 0], [0.001,.001,1])
 
         # export variables
         self.backing_th = backing_th
         self.dx = dx
 
 
-downspout_chunk_len = shelf_width - 2*in2mm
+# Leave some extra space at the ends
+downspout_tube_len = shelf_width - 2*inch
 
 class Downspout(Part):
     def __init__(self,
-        l=downspout_chunk_len,
+        l=downspout_tube_len,
 
         has_holes=True,
         hole_spacing=20,
-        hole_r=1*in2mm
+        hole_r=1*inch
         ):
         super().__init__()
         d = color("white")(
@@ -200,56 +184,19 @@ class Downspout(Part):
             # print("n = %d" % n)
             for i in range(n):
                 d -= rotate([0,0,0])(rotate([-90, 0, 0])(
-                        translate([DOWNSPOUT_OUTER_W/2, -(sp + hole_r + i*(sp+hole_r*2)), h/2])(
+                        translate([downspout_outer_w/2, -(sp + hole_r + i*(sp+hole_r*2)), h/2])(
                             cylinder(r=hole_r, h=100))))
 
 
         self.add(color("white")(render()(d)))
 
-        self.con['back'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, 0], [0.001,0.001,1])
-        self.con['front'] = Connector([DOWNSPOUT_OUTER_W/2, h/2, l], [0.001,0.001,-1]) #/////////////////////////////////
+        self.con['back'] = Connector([downspout_outer_w/2, h/2, 0], [0.001,0.001,1])
+        self.con['front'] = Connector([downspout_outer_w/2, h/2, l], [0.001,0.001,-1]) #/////////////////////////////////
 
-def shelf_plumbing():
-    c = Endcap180Connector()
-    d1 = Downspout()
-    d2 = Downspout()
-
-    asm = c
-    asm += attach(c.con['right'], d1.con['back'])(d1)
-    asm += attach(c.con['left'], d2.con['back'])(d2)
-
-    c2 = Endcap180Connector()
-    asm += attach(d1.con['front'], c2.con['left'])(c2)
-
-    # TODO: attachments aren't smart enough to do this :(
-    # d3 = Downspout()
-    # asm += attach(c2.con['right'], d3.con['front'])(d3)
-
-    # asm = cube()
-    return asm
-
-# class EndcapWithHole(Part):
-#     def __init__(self,
-#         hole_r = 10,
-#         wall_th = 1,
-#         ):
-#         super().__init__()
-
-#         e = Endcap()
-
-#         z = 10
-#         e += translate([-wall_th,-wall_th,-z])(linear_extrude(z)(
-#                 rrect(w+wall_th*2, h+wall_th*2, r+wall_th)))
-
-#         e -= translate([w/2, h/2, -5])(
-#             cylinder(r=hole_r, h=100))
-
-#         self.add(e)
-
-def jigsaw_piece(dx, th, peg_w=10, opp=False):
+def jigsaw_piece(dx, th, peg_w=10, odd=False):
     # print("jigsaw({}, {}".format(dx, th))
     e = Endcap(back_th=DEFAULT_ENDCAP_BACK_TH+th)
-    jig = jigsaw2.jigsaw(e.h+2*INC, max_peg_cycle_ht=14, peg_w=peg_w, opp=opp)
+    jig = jigsaw2.jigsaw(e.h+2*INC, max_peg_cycle_ht=14, peg_w=peg_w, odd=odd)
     # total w is width of piece up until the end of the pegs
     # note that only half of peg length is counted
     rect_w = dx/2 - peg_w / 2
@@ -273,62 +220,28 @@ class EndcapWithPegs(Part):
         ))
 
 
-def shelf_sxs():
-    ec = Endcap180Connector()
-    asm = ec
-    asm += translate([ec.dx*2+DOWNSPOUT_OUTER_W+20, h, 0])(rotate([0,0,180])(EndcapWithPegs()))
-    return asm
-
 
 def with_conn(x):
     return x + x.draw_connectors()
 
-# A circle with hexagonal holes.
-def hatchring(
-    r=50,
-    hex_th=0.5,
-    circ_th=1,
-    ):
-
-    # hatch
-    h = translate([-r*2, -r*2])(
-            hatch(sz=[r*4, r*4], r=1, wall_th=hex_th))
-    # boundary circle
-    ring = circle(r=r) - circle(r=r-circ_th)
-    return render()(
-        intersection()(
-            h + ring,
-            # trim off everything outside the circle
-            circle(r)
-        )
-    )
-
-# def ball():
-#     return difference()(
-#         sphere(r=10),
-#         [rotate([i*360/20,j*360/20,0])(cylinder(r=1,h=100)) for i in range(20) for j in range(20)]
-#         )
-
-def jigsaw_test_piece(opp=True):
-    return render()(jigsaw_piece(30, 10, opp=opp))
+def jigsaw_test_piece(odd=True):
+    return render()(jigsaw_piece(30, 10, odd=odd))
 
 def both_jigsaw_test_pieces():
     return union()(
             render()(
-                jigsaw_test_piece(opp=True)),
+                jigsaw_test_piece(odd=True)),
             translate([130, 60])(
                 rotate([0,0,180])(
                     render()(
-                        jigsaw_test_piece(opp=False)))))
+                        jigsaw_test_piece(odd=False)))))
 
 
 if __name__ == '__main__':
     model = item_grid([
         ("downspout profile", DownspoutProfile()),
         ("endcap", with_conn(Endcap())),
-        # ("endcap2", with_conn(EndcapWithHole())),
         ("with pegs", EndcapWithPegs()),
-        ("hatch", hatchring()),
         ("endcap 180", Endcap180Connector()),
         ("shelf sxs", shelf_sxs()),
         ("downspout", rotate([180,0,0])(

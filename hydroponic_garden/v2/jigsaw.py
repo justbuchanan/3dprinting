@@ -3,10 +3,13 @@ from solid.utils import *
 from tools.util import item_grid, Part, INC
 import numpy as np
 
+# This module provides a temlate for a jigsaw-puzzle-like connector to connect
+# two parts together.
+
 
 # tol: subtracted from the y on each side. Tried 0.05 initially. They were pretty tight
 # also tried tol=0.1, seemed slightly loose
-def sine_peg(peg_w, peg_cycle_ht, amp=1.5, opp=False, tol=0.05):
+def sine_peg(peg_w, peg_cycle_ht, amp=1.5, odd=False, tol=0.05):
     endangle = 2*pi
     t2w = peg_w/endangle
 
@@ -30,11 +33,11 @@ def sine_peg(peg_w, peg_cycle_ht, amp=1.5, opp=False, tol=0.05):
         ]))
 
 
-def rect_peg(peg_w, peg_cycle_ht, opp=False):
+def rect_peg(peg_w, peg_cycle_ht, odd=False):
     return square([peg_w, peg_cycle_ht/2])
 
 
-def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, opp=False):
+def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, odd=False):
     # Calculate number of pegs so that we're close, but not over our desired peg height
     n = math.floor(h / max_peg_cycle_ht)
     peg_cycle_ht = h / n
@@ -46,7 +49,7 @@ def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, opp=False):
 
     # Shift so that opposing parts intermesh correctly
     # Opposing pegs are spaced 1/4*peg_cycle_ht offset from one another
-    y_shift_mul = 1/4 if opp else -1/4
+    y_shift_mul = 1/4 if odd else -1/4
     return intersection()(
         # all of the pegs
         union()([
@@ -60,10 +63,10 @@ def jigsaw(h, peg_w=10, max_peg_cycle_ht=12, peg_func=sine_peg, opp=False):
     )
 
 def jigsaw_test(**kwargs):
-    left = jigsaw(opp=False, **kwargs)
+    left = jigsaw(odd=False, **kwargs)
     right = translate([kwargs['peg_w'], kwargs['h']])(
                 rotate(180)(
-                    jigsaw(opp=True, **kwargs)))
+                    jigsaw(odd=True, **kwargs)))
 
     L = left - right
     R = right - left
@@ -76,7 +79,7 @@ def both(h):
             # an interlocking set of demo pieces
             translate([30,h])(rotate(180)(
                 rr + jigsaw(h=h, peg_func=sine_peg))),
-            rr + jigsaw(h=h,peg_func=sine_peg, opp=True)))
+            rr + jigsaw(h=h,peg_func=sine_peg, odd=True)))
 
 h = 40
 model = item_grid([
